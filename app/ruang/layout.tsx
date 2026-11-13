@@ -1,18 +1,32 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
+import { api, convex, secret } from "@/lib/convex";
 import { requireRoom } from "@/lib/session";
-import { signOut } from "../actions";
-import { Mark } from "../brand";
+import { requestTime } from "@/lib/clock";
+import { Avatar } from "../brand";
+import { BottomNav } from "../nav";
 
 export const metadata: Metadata = { title: "Ruangan" };
 
-async function RoomName() {
+/** "Halo, Poliklinik Obgyn" with the room's avatar, and a dot that says whether SIMRS answers. */
+async function Greeting() {
   const account = await requireRoom();
+  const [hospital, now] = await Promise.all([convex.query(api.hospital.get, { secret }), requestTime()]);
+  const online = !!hospital && now - hospital.seenAt < 90_000;
   return (
     <>
-      <span className="block truncate font-semibold leading-tight">{account.room.name}</span>
-      <span className="block text-xs text-muted">{account.room.kind === "poli" ? "Poliklinik" : "Rawat inap"}</span>
+      <Avatar name={account.room.name} className="size-11 text-sm" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] text-muted">Halo,</p>
+        <p className="truncate font-bold leading-tight">{account.room.name}</p>
+      </div>
+      <span
+        className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${online ? "bg-mint text-brand-strong" : "bg-danger-soft text-danger"}`}
+        title={online ? "SIMRS terhubung" : "SIMRS tidak terhubung"}
+      >
+        <span className={`size-2 rounded-full ${online ? "bg-leaf" : "bg-danger"}`} aria-hidden="true" />
+        {online ? "SIMRS" : "Offline"}
+      </span>
     </>
   );
 }
@@ -20,32 +34,26 @@ async function RoomName() {
 export default function Layout({ children }: LayoutProps<"/ruang">) {
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-line bg-card/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-xl items-center gap-3 px-4 py-2.5">
-          <Link href="/ruang" aria-label="Daftar pasien" className="shrink-0">
-            <Mark />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <Suspense fallback={<span className="skeleton block h-9 w-40" />}>
-              <RoomName />
-            </Suspense>
-          </div>
-          <form action={signOut}>
-            <button type="submit" className="btn-quiet min-h-10 px-3">
-              Keluar
-            </button>
-          </form>
-        </div>
-        <nav className="mx-auto flex w-full max-w-xl gap-1 px-3 pb-2 text-sm font-medium" aria-label="Menu ruangan">
-          <Link href="/ruang" className="rounded-lg px-3 py-2 hover:bg-paper">
-            Pasien
-          </Link>
-          <Link href="/ruang/dibagikan" className="rounded-lg px-3 py-2 hover:bg-paper">
-            Sudah dibagikan
-          </Link>
-        </nav>
+      <header className="mx-auto flex w-full max-w-xl items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <Suspense
+          fallback={
+            <>
+              <span className="skeleton size-11 rounded-full" />
+              <span className="skeleton h-9 flex-1" />
+            </>
+          }
+        >
+          <Greeting />
+        </Suspense>
       </header>
       {children}
+      <BottomNav
+        label="Menu ruangan"
+        items={[
+          { href: "/ruang", label: "Pasien", icon: "users" },
+          { href: "/ruang/dibagikan", label: "Dibagikan", icon: "qr" },
+        ]}
+      />
     </>
   );
 }

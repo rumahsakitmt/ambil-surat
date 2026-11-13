@@ -3,15 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  createRoom,
-  openShare,
-  setPassword,
-  setupAdmin,
-  shareLetters,
-  signIn,
-  type FormState,
-} from "./actions";
+import { LETTER_TONES, type LetterType } from "@/lib/format";
+import { createRoom, openShare, setPassword, setupAdmin, shareLetters, signIn, type FormState } from "./actions";
+import { IconCheck } from "./icons";
 
 /** A submit button that shows it is working, so nobody taps twice. */
 export function Submit({ children, busy, className = "btn w-full" }: { children: React.ReactNode; busy?: string; className?: string }) {
@@ -89,9 +83,9 @@ export function LoginForm({ first }: { first: boolean }) {
   );
 }
 
-type LetterOption = { value: string; title: string; noSurat: string; date: string; detail: string; today: boolean };
+type LetterOption = { value: string; type: LetterType; title: string; noSurat: string; date: string; detail: string; today: boolean };
 
-/** The letters of one patient, to tick and share. Today's are ticked already. */
+/** The letters of one patient as pastel tiles to tick and share. Today's are ticked already. */
 export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOption[] }) {
   const [state, action] = useActionState(shareLetters, undefined);
   const [picked, setPicked] = useState(() => new Set(letters.filter((l) => l.today).map((l) => l.value)));
@@ -104,24 +98,31 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
   return (
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="noRm" value={noRm} />
-      <ul className="flex flex-col gap-2">
-        {letters.map((letter) => {
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {letters.map((letter, i) => {
           const on = picked.has(letter.value);
           return (
-            <li key={letter.value}>
+            <li key={letter.value} className="rise" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
               <label
-                className={`card flex cursor-pointer items-start gap-3 p-4 transition-colors has-focus-visible:outline-2 has-focus-visible:outline-brand ${on ? "border-brand bg-brand-soft/60" : ""}`}
+                className={`tile relative flex h-full min-h-36 cursor-pointer flex-col justify-between gap-4 transition-[box-shadow,transform] duration-150 select-none active:scale-[0.985] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink ${LETTER_TONES[letter.type].tile} ${on ? "shadow-[inset_0_0_0_2.5px_var(--color-ink)]" : ""}`}
               >
-                <input type="checkbox" name="item" value={letter.value} checked={on} onChange={() => toggle(letter.value)} className="mt-0.5 size-6 shrink-0 accent-brand" />
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-x-2">
-                    <span className="font-semibold">{letter.title}</span>
-                    {letter.today && <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-white">Hari ini</span>}
+                <input type="checkbox" name="item" value={letter.value} checked={on} onChange={() => toggle(letter.value)} className="peer sr-only" />
+                <span
+                  className={`absolute top-4 right-4 grid size-8 place-items-center rounded-full transition-colors duration-150 ${on ? "bg-ink text-white" : "bg-white/80 text-transparent ring-1 ring-ink/15"}`}
+                  aria-hidden="true"
+                >
+                  <IconCheck className="size-4" />
+                </span>
+                <span className="pr-10">
+                  <span className="block text-[13px] font-semibold text-ink/65">
+                    {letter.date}
+                    {letter.today && " · hari ini"}
                   </span>
-                  <span className="mt-0.5 block text-sm text-muted">
-                    {letter.date} · {letter.detail}
-                  </span>
-                  <span className="mt-0.5 block truncate font-mono text-xs text-muted">{letter.noSurat}</span>
+                  <span className="mt-0.5 block text-lg leading-snug font-extrabold tracking-tight">{letter.title}</span>
+                </span>
+                <span className="min-w-0">
+                  {letter.detail && <span className="block truncate text-sm text-ink/80">{letter.detail}</span>}
+                  <span className="mt-0.5 block truncate font-mono text-xs text-ink/60">{letter.noSurat}</span>
                 </span>
               </label>
             </li>
@@ -129,7 +130,8 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
         })}
       </ul>
       <Message state={state} />
-      <div className="sticky bottom-3 z-10">
+      {/* Floats above the bottom bar so it is always in reach of a thumb. */}
+      <div className="sticky bottom-24 z-20 pt-2">
         <SubmitShare count={picked.size} />
       </div>
     </form>
@@ -139,8 +141,11 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
 function SubmitShare({ count }: { count: number }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn w-full shadow-lg shadow-brand/20" disabled={pending || count === 0}>
-      {pending ? "Menyiapkan QR…" : count === 0 ? "Centang surat yang dibagikan" : `Buat QR untuk ${count} surat`}
+    <button type="submit" className="btn w-full justify-between pr-3 pl-6 shadow-[0_12px_28px_-12px_rgb(29_35_31/0.45)]" disabled={pending || count === 0}>
+      <span>{pending ? "Menyiapkan QR…" : count === 0 ? "Pilih surat dulu" : `Buat QR · ${count} surat`}</span>
+      <span className="grid size-10 place-items-center rounded-full bg-white/70 text-base leading-none" aria-hidden="true">
+        ›››
+      </span>
     </button>
   );
 }
@@ -201,7 +206,7 @@ export function PasswordForm({ id, own }: { id: string; own: boolean }) {
       <div className="flex gap-2">
         <input
           name="password"
-          className="field min-h-11"
+          className="field min-h-11 rounded-full bg-paper ring-0"
           type={own ? "password" : "text"}
           autoComplete={own ? "new-password" : "off"}
           required

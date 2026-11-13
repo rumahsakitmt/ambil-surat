@@ -1,20 +1,42 @@
 @import "tailwindcss";
 
+/*
+ * Soft pastel tiles on a pale wash: each kind of letter has its own colour
+ * (kontrol sky, sakit blush, sehat mint, kematian stone), the main action is
+ * a butter-yellow pill, and everything is very round.
+ */
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
-  --color-paper: #f4f6f3;
+
+  --color-paper: #f3f4f0;
   --color-card: #ffffff;
-  --color-ink: #13211d;
-  --color-muted: #5d6b66;
-  --color-line: #dfe5e1;
-  --color-brand: #0e6b5e;
-  --color-brand-strong: #0a5449;
-  --color-brand-soft: #e3f1ed;
-  --color-warn: #8a5a00;
-  --color-warn-soft: #fdf3dc;
+  --color-ink: #1d231f;
+  --color-muted: #6b736d;
+  --color-line: #e6e9e3;
+
+  /* Green for text and links: dark enough to read on white. */
+  --color-brand: #3c7424;
+  --color-brand-strong: #2d5a1a;
+  --color-leaf: #82bd5e;
+
+  --color-mint: #dcefc9;
+  --color-mint-deep: #a8d488;
+  --color-sky: #d2ebf3;
+  --color-sky-deep: #8ccbe0;
+  --color-butter: #fbec97;
+  --color-butter-deep: #f0d541;
+  --color-blush: #f9dcd8;
+  --color-blush-deep: #eca69e;
+  --color-stone: #e9e7e1;
+  --color-stone-deep: #c7c2b7;
+
+  --color-warn: #7a5300;
+  --color-warn-soft: #fdf1cf;
   --color-danger: #a3271f;
-  --color-danger-soft: #fdecea;
+  --color-danger-soft: #fde6e3;
+
+  --radius-tile: 1.75rem;
 }
 
 html {
@@ -24,56 +46,95 @@ html {
 }
 
 body {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  /* A pale green wash at the top, like light through a window. */
+  background:
+    radial-gradient(60rem 28rem at 10% -8rem, #e4f2d3 0%, transparent 60%),
+    radial-gradient(40rem 24rem at 110% 0, #e3f1f5 0%, transparent 55%),
+    var(--color-paper);
+  background-attachment: fixed;
 }
 
 @layer components {
   .page {
-    @apply mx-auto w-full max-w-xl px-4 pb-16 pt-5;
+    @apply mx-auto w-full max-w-xl px-4 pt-4 pb-32;
   }
   .card {
-    @apply rounded-2xl border border-line bg-card;
+    @apply rounded-[var(--radius-tile)] bg-card;
   }
+  .tile {
+    @apply rounded-[var(--radius-tile)] p-5;
+  }
+
+  /* The main action: a butter-yellow pill. */
   .btn {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-base font-semibold text-white transition-colors select-none;
-    @apply hover:bg-brand-strong active:bg-brand-strong disabled:opacity-50;
-    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-butter px-6 text-base font-bold text-ink select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-butter-deep active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
   }
   .btn-quiet {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition-colors select-none;
-    @apply hover:bg-paper active:bg-paper disabled:opacity-50;
-    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-ink ring-1 ring-line select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-paper active:scale-[0.98] disabled:opacity-50;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
   }
   .btn-danger {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-danger/30 bg-card px-4 text-sm font-medium text-danger transition-colors select-none;
-    @apply hover:bg-danger-soft active:bg-danger-soft disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-danger ring-1 ring-danger/25 select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-danger-soft active:scale-[0.98] disabled:opacity-50;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger;
   }
+  /* Round icon buttons, as in the header. */
+  .icon-btn {
+    @apply inline-grid size-11 shrink-0 place-items-center rounded-full bg-card text-ink ring-1 ring-line;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-paper active:scale-95;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
+  }
+
   .field {
     /* 16px text, so iPhones don't zoom the page on focus. */
-    @apply min-h-12 w-full rounded-xl border border-line bg-card px-4 text-base text-ink placeholder:text-muted/70;
-    @apply focus:border-brand focus:outline-2 focus:outline-brand/25;
+    @apply min-h-14 w-full rounded-2xl bg-card px-4 text-base text-ink ring-1 ring-line placeholder:text-muted/70;
+    @apply focus:ring-2 focus:ring-leaf focus:outline-none;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-ink;
+    @apply mb-2 block text-sm font-semibold text-ink;
   }
+  .eyebrow {
+    @apply text-[13px] font-semibold text-ink/70;
+  }
+  .num {
+    @apply font-extrabold tracking-tight tabular-nums;
+  }
+
   .note-warn {
-    @apply rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn;
+    @apply rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn;
   }
   .note-danger {
-    @apply rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger;
+    @apply rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger;
   }
   .note-ok {
-    @apply rounded-xl bg-brand-soft px-4 py-3 text-sm text-brand-strong;
+    @apply rounded-2xl bg-mint px-4 py-3 text-sm text-brand-strong;
   }
   .skeleton {
-    @apply animate-pulse rounded-xl bg-line/70;
+    @apply animate-pulse rounded-[var(--radius-tile)] bg-line/70;
+  }
+
+  /* Tiles settle in one after another when a page opens. */
+  .rise {
+    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton {
+  .skeleton,
+  .rise {
     animation: none;
   }
 }

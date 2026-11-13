@@ -37,3 +37,11 @@ export const LETTER_NAMES = {
   kematian: "Surat Kematian",
 } as const;
 export type LetterType = keyof typeof LETTER_NAMES;
+
+/** Each kind of letter has its own pastel, written out in full so Tailwind sees the classes. */
+export const LETTER_TONES: Record<LetterType, { tile: string; deep: string; short: string }> = {
+  kontrol: { tile: "bg-sky", deep: "bg-sky-deep", short: "Kontrol" },
+  sakit: { tile: "bg-blush", deep: "bg-blush-deep", short: "Sakit" },
+  sehat: { tile: "bg-mint", deep: "bg-mint-deep", short: "Sehat" },
+  kematian: { tile: "bg-stone", deep: "bg-stone-deep", short: "Kematian" },
+};

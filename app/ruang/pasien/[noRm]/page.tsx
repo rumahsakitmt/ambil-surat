@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { ask } from "@/lib/convex";
 import { LETTER_NAMES, age, shortDate } from "@/lib/format";
 import { requireRoom } from "@/lib/session";
+import { Avatar } from "../../../brand";
 import { ShareForm } from "../../../ui";
-import { ListSkeleton, Unreachable } from "../../parts";
+import { ListSkeleton, TitleBar, Unreachable } from "../../parts";
 
 async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[noRm]">, "params" | "searchParams">) {
   await requireRoom();
@@ -17,25 +18,33 @@ async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[
   const here = `/ruang/pasien/${encodeURIComponent(noRm)}`;
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">{patient.name}</h1>
-        <p className="mt-0.5 text-sm text-muted">
-          RM {patient.noRm} · {patient.sex === "P" ? "Perempuan" : "Laki-laki"} · {age(patient.dob, today)} · lahir {shortDate(patient.dob)}
-        </p>
+      <div className="card rise flex items-center gap-4 p-4">
+        <Avatar name={patient.name} className="size-14 text-base" />
+        <div className="min-w-0">
+          <h2 className="text-lg leading-tight font-extrabold tracking-tight text-balance">{patient.name}</h2>
+          <p className="mt-1 text-[13px] text-muted">
+            RM {patient.noRm} · {patient.sex === "P" ? "Perempuan" : "Laki-laki"} · {age(patient.dob, today)}
+          </p>
+          <p className="text-[13px] text-muted">Lahir {shortDate(patient.dob)}</p>
+        </div>
       </div>
       {letters.length === 0 ? (
-        <div className="card p-4 text-sm text-muted">
-          <p className="font-medium text-ink">{all ? "Pasien ini belum punya surat di SIMRS." : "Tidak ada surat dalam 30 hari terakhir."}</p>
-          <p className="mt-1">Surat kontrol, surat sakit, surat sehat dan surat kematian muncul di sini setelah dibuat di SIMRS.</p>
+        <div className="tile bg-card text-sm text-muted">
+          <p className="font-bold text-ink">{all ? "Pasien ini belum punya surat di SIMRS." : "Tidak ada surat dalam 30 hari terakhir."}</p>
+          <p className="mt-1 text-pretty">Surat kontrol, surat sakit, surat sehat dan surat kematian muncul di sini setelah dibuat di SIMRS.</p>
         </div>
       ) : (
         <>
-          <h2 className="text-sm font-medium text-muted">{all ? "Semua surat" : "Surat 30 hari terakhir"} · centang yang dibagikan</h2>
+          <div className="flex items-baseline justify-between gap-3 px-1">
+            <h3 className="font-bold">{all ? "Semua surat" : "30 hari terakhir"}</h3>
+            <p className="text-[13px] text-muted">Pilih yang dibagikan</p>
+          </div>
           <ShareForm
             key={all ? "all" : "recent"}
             noRm={patient.noRm}
             letters={letters.map((l) => ({
               value: `${l.type}|${l.noSurat}|${l.date}`,
+              type: l.type,
               title: LETTER_NAMES[l.type],
               noSurat: l.noSurat,
               date: shortDate(l.date),
@@ -46,15 +55,9 @@ async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[
         </>
       )}
       <p className="text-center text-sm">
-        {all ? (
-          <Link href={here} className="font-medium text-brand underline underline-offset-4">
-            Hanya 30 hari terakhir
-          </Link>
-        ) : (
-          <Link href={`${here}?semua=1`} className="font-medium text-brand underline underline-offset-4">
-            Tampilkan surat yang lebih lama
-          </Link>
-        )}
+        <Link href={all ? here : `${here}?semua=1`} className="font-semibold text-brand underline-offset-4 hover:underline">
+          {all ? "Hanya 30 hari terakhir" : "Tampilkan surat yang lebih lama"}
+        </Link>
       </p>
     </>
   );
@@ -63,13 +66,11 @@ async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[
 export default function Page({ params, searchParams }: PageProps<"/ruang/pasien/[noRm]">) {
   return (
     <main className="page flex flex-col gap-4">
-      <Link href="/ruang" className="text-sm font-medium text-brand">
-        ← Daftar pasien
-      </Link>
+      <TitleBar href="/ruang" title="Surat pasien" />
       <Suspense
         fallback={
           <>
-            <div className="skeleton h-14 w-3/4" />
+            <div className="skeleton h-24" />
             <ListSkeleton rows={3} />
           </>
         }

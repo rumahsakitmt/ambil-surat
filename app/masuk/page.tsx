@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { api, convex, secret } from "@/lib/convex";
 import { getAccount } from "@/lib/session";
-import { Brand } from "../brand";
+import { Mark } from "../brand";
 import { LoginForm } from "../ui";
 
 export const metadata: Metadata = { title: "Masuk petugas" };
@@ -15,28 +15,28 @@ async function Form() {
   const first = !(await convex.query(api.accounts.any, { secret }));
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{first ? "Buat akun admin" : "Masuk petugas"}</h1>
-        <p className="mt-1 text-sm text-muted">
+      <div className="tile rise bg-mint pt-6">
+        <Mark className="size-12" />
+        <h1 className="mt-6 text-[1.7rem] leading-tight font-extrabold tracking-tight">{first ? "Buat akun admin" : "Masuk petugas"}</h1>
+        <p className="mt-1.5 text-sm text-ink/75 text-pretty">
           {first ? "Belum ada akun. Akun pertama menjadi admin yang membuat akun tiap ruangan." : "Pakai akun ruangan Anda. HP ini tetap masuk selama 30 hari."}
         </p>
       </div>
-      <LoginForm first={first} />
+      <div className="card rise p-5" style={{ "--i": 1 } as React.CSSProperties}>
+        <LoginForm first={first} />
+      </div>
     </>
   );
 }
 
 export default function Page() {
   return (
-    <main className="page flex flex-1 flex-col justify-center gap-6">
-      <Brand />
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-3 px-4 py-8">
       <Suspense
         fallback={
-          <div className="flex flex-col gap-4" aria-hidden="true">
-            <div className="skeleton h-14 w-2/3" />
-            <div className="skeleton h-12" />
-            <div className="skeleton h-12" />
-            <div className="skeleton h-12" />
+          <div className="flex flex-col gap-3" aria-hidden="true">
+            <div className="skeleton h-48" />
+            <div className="skeleton h-64" />
           </div>
         }
       >
