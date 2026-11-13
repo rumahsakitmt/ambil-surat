@@ -47,6 +47,7 @@ async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[
               type: l.type,
               title: LETTER_NAMES[l.type],
               noSurat: l.noSurat,
+              noRawat: l.noRawat ?? "",
               date: shortDate(l.date),
               detail: l.rencana ? `${l.detail} · kontrol ${shortDate(l.rencana)}` : l.detail,
               today: l.date === today,

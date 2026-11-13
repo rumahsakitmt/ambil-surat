@@ -110,7 +110,7 @@ export async function letters(run: Run, today: string, noRm: string, all: boolea
     run(`select ${PATIENT}, '' as info from pasien where pasien.no_rkm_medis=?`, [noRm]),
     run(
       "select bridging_surat_kontrol_bpjs.no_surat, date_format(bridging_surat_kontrol_bpjs.tgl_surat,'%Y-%m-%d') as date, " +
-        "date_format(bridging_surat_kontrol_bpjs.tgl_rencana,'%Y-%m-%d') as rencana, bridging_surat_kontrol_bpjs.nm_poli_bpjs as poli " +
+        "date_format(bridging_surat_kontrol_bpjs.tgl_rencana,'%Y-%m-%d') as rencana, bridging_surat_kontrol_bpjs.nm_poli_bpjs as poli, bridging_sep.no_rawat " +
         "from bridging_surat_kontrol_bpjs inner join bridging_sep on bridging_sep.no_sep=bridging_surat_kontrol_bpjs.no_sep " +
         "where bridging_sep.nomr=?" +
         (all ? "" : " and (bridging_surat_kontrol_bpjs.tgl_surat>=date_sub(?, interval 30 day) or bridging_surat_kontrol_bpjs.tgl_rencana>=?)") +
@@ -118,18 +118,18 @@ export async function letters(run: Run, today: string, noRm: string, all: boolea
       all ? [noRm] : [noRm, today, today],
     ),
     run(
-      "select suratsakit.no_surat, date_format(suratsakit.tanggalawal,'%Y-%m-%d') as date, suratsakit.lamasakit " +
+      "select suratsakit.no_surat, suratsakit.no_rawat, date_format(suratsakit.tanggalawal,'%Y-%m-%d') as date, suratsakit.lamasakit " +
         "from suratsakit inner join reg_periksa on reg_periksa.no_rawat=suratsakit.no_rawat " +
         `where reg_periksa.no_rkm_medis=?${since("suratsakit.tanggalawal")} order by suratsakit.tanggalawal desc limit 50`,
       p,
     ),
     run(
-      "select surat_keterangan_sehat.no_surat, date_format(surat_keterangan_sehat.tanggalsurat,'%Y-%m-%d') as date, surat_keterangan_sehat.keperluan " +
+      "select surat_keterangan_sehat.no_surat, surat_keterangan_sehat.no_rawat, date_format(surat_keterangan_sehat.tanggalsurat,'%Y-%m-%d') as date, surat_keterangan_sehat.keperluan " +
         "from surat_keterangan_sehat inner join reg_periksa on reg_periksa.no_rawat=surat_keterangan_sehat.no_rawat " +
         `where reg_periksa.no_rkm_medis=?${since("surat_keterangan_sehat.tanggalsurat")} order by surat_keterangan_sehat.tanggalsurat desc limit 50`,
       p,
     ),
-    // One per patient: its "number" is the record number, as Khanza prints it.
+    // One per patient: its "number" is the record number, as Khanza prints it. It has no visit, so no no. rawat.
     run(
       "select pasien_mati.no_rkm_medis as no_surat, date_format(pasien_mati.tanggal,'%Y-%m-%d') as date, pasien_mati.keterangan " +
         `from pasien_mati where pasien_mati.no_rkm_medis=?${since("pasien_mati.tanggal")}`,
@@ -139,9 +139,9 @@ export async function letters(run: Run, today: string, noRm: string, all: boolea
   if (!who[0]) return null;
   const list = [
     // `rencana` is the control date; the app writes it out ("kontrol 23 Okt 2026").
-    ...kontrol.map((r) => ({ type: "kontrol" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.poli), rencana: text(r.rencana) })),
-    ...sakit.map((r) => ({ type: "sakit" as const, noSurat: text(r.no_surat), date: text(r.date), detail: `Istirahat ${text(r.lamasakit)} hari` })),
-    ...sehat.map((r) => ({ type: "sehat" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.keperluan) })),
+    ...kontrol.map((r) => ({ type: "kontrol" as const, noSurat: text(r.no_surat), date: text(r.date), noRawat: text(r.no_rawat), detail: text(r.poli), rencana: text(r.rencana) })),
+    ...sakit.map((r) => ({ type: "sakit" as const, noSurat: text(r.no_surat), date: text(r.date), noRawat: text(r.no_rawat), detail: `Istirahat ${text(r.lamasakit)} hari` })),
+    ...sehat.map((r) => ({ type: "sehat" as const, noSurat: text(r.no_surat), date: text(r.date), noRawat: text(r.no_rawat), detail: text(r.keperluan) })),
     ...kematian.map((r) => ({ type: "kematian" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.keterangan) })),
   ].sort((a, b) => b.date.localeCompare(a.date));
   return { patient: patient(who[0]), today, letters: list };
@@ -213,7 +213,7 @@ async function letter(run: Run, noRm: string, item: Item, hospital: Hospital, li
   }
   if (item.type === "sakit") {
     const [r] = await run(
-      "select suratsakit.no_surat, date_format(suratsakit.tanggalawal,'%d-%m-%Y') as tanggalawal, date_format(suratsakit.tanggalakhir,'%d-%m-%Y') as tanggalakhir, suratsakit.lamasakit, " +
+      "select suratsakit.no_surat, suratsakit.no_rawat, date_format(suratsakit.tanggalawal,'%d-%m-%Y') as tanggalawal, date_format(suratsakit.tanggalakhir,'%d-%m-%Y') as tanggalakhir, suratsakit.lamasakit, " +
         "date_format(reg_periksa.tgl_registrasi,'%d-%m-%Y') as tgl_registrasi, perusahaan_pasien.nama_perusahaan, dokter.nm_dokter, pasien.nm_pasien, pasien.jk, " +
         `concat(reg_periksa.umurdaftar,' ',reg_periksa.sttsumur) as umur, pasien.pekerjaan, ${ADDRESS} as alamat, ` +
         "(select concat(diagnosa_pasien.kd_penyakit,' ',penyakit.nm_penyakit) from diagnosa_pasien inner join penyakit on diagnosa_pasien.kd_penyakit=penyakit.kd_penyakit " +
@@ -244,7 +244,7 @@ async function letter(run: Run, noRm: string, item: Item, hospital: Hospital, li
     };
   }
   const [r] = await run(
-    "select surat_keterangan_sehat.no_surat, date_format(surat_keterangan_sehat.tanggalsurat,'%d-%m-%Y') as tanggalsurat, surat_keterangan_sehat.berat, surat_keterangan_sehat.tinggi, " +
+    "select surat_keterangan_sehat.no_surat, surat_keterangan_sehat.no_rawat, date_format(surat_keterangan_sehat.tanggalsurat,'%d-%m-%Y') as tanggalsurat, surat_keterangan_sehat.berat, surat_keterangan_sehat.tinggi, " +
       "surat_keterangan_sehat.tensi, surat_keterangan_sehat.suhu, surat_keterangan_sehat.butawarna, surat_keterangan_sehat.keperluan, surat_keterangan_sehat.kesimpulan, " +
       `dokter.nm_dokter, pasien.jk, pasien.nm_pasien, concat(reg_periksa.umurdaftar,' ',reg_periksa.sttsumur) as umur, ${ADDRESS} as alamat ` +
       "from surat_keterangan_sehat inner join reg_periksa on reg_periksa.no_rawat=surat_keterangan_sehat.no_rawat " +

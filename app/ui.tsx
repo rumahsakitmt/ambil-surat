@@ -83,7 +83,7 @@ export function LoginForm({ first }: { first: boolean }) {
   );
 }
 
-type LetterOption = { value: string; type: LetterType; title: string; noSurat: string; date: string; detail: string; today: boolean };
+type LetterOption = { value: string; type: LetterType; title: string; noSurat: string; noRawat: string; date: string; detail: string; today: boolean };
 
 /** The letters of one patient as pastel tiles to tick and share. Today's are ticked already. */
 export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOption[] }) {
@@ -122,6 +122,7 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
                 </span>
                 <span className="min-w-0">
                   {letter.detail && <span className="block truncate text-sm text-ink/80">{letter.detail}</span>}
+                  {letter.noRawat && <span className="mt-0.5 block truncate text-[13px] font-semibold text-ink/70">No. rawat {letter.noRawat}</span>}
                   <span className="mt-0.5 block truncate font-mono text-xs text-ink/60">{letter.noSurat}</span>
                 </span>
               </label>
