@@ -6,7 +6,7 @@ Connects **SIMRS Khanza** to Ambil Surat. It runs on a machine at the hospital t
 
 Only what a room asks for, when it asks:
 
-- **Room pick lists and searches:** record number, name, date of birth, sex, and one line of context (queue number and doctor, the room in a ward, or the address in a search). The answer is deleted from the cloud as soon as the app has read it, or after two minutes.
+- **Room pick lists and searches:** record number, name, date of birth, sex, and one line of context (queue number and doctor, the room in a ward, the address in a search, or the visit's poli and date in a search by no. rawat). The answer is deleted from the cloud as soon as the app has read it, or after two minutes.
 - **Rooms:** names and codes of active poli and wards, for the admin's account form.
 - **Shared letters:** the contents of the letters a room ticked for one patient, plus that patient's name and date of birth (to check the date of birth the family types). They are deleted when the QR expires (7 days) or is revoked.
 - **The letterhead:** the hospital's name, address and contact, its logo and the BPJS logo, once and again when they change.

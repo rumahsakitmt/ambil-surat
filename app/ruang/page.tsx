@@ -36,7 +36,7 @@ async function Patients({ searchParams }: Search) {
   const today = todayIso();
 
   if (q) {
-    if (q.length < 3) return <p className="note-warn">Ketik minimal 3 huruf nama, atau nomor RM lengkap.</p>;
+    if (q.length < 3) return <p className="note-warn">Ketik minimal 3 huruf nama, atau nomor RM atau no. rawat lengkap.</p>;
     const found = await ask("search", { q });
     if (!found.ok) return <Unreachable offline={found.offline} />;
     return (
@@ -50,7 +50,7 @@ async function Patients({ searchParams }: Search) {
         {found.data.length > 0 ? (
           <PatientList patients={found.data} today={today} />
         ) : (
-          <p className="tile bg-card text-sm text-muted">Tidak ada pasien dengan nama atau nomor RM “{q}”.</p>
+          <p className="tile bg-card text-sm text-muted">Tidak ada pasien dengan nama, nomor RM atau no. rawat “{q}”.</p>
         )}
         {found.data.length === 30 && <p className="px-1 text-sm text-muted">Hanya 30 pertama yang ditampilkan. Ketik nama lebih lengkap.</p>}
       </section>
@@ -70,7 +70,7 @@ async function Patients({ searchParams }: Search) {
           <PatientList patients={list.data} today={today} />
         ) : (
           <p className="tile bg-card text-sm text-muted text-pretty">
-            {poli ? "Belum ada pasien terdaftar di poli ini hari ini." : "Tidak ada pasien yang sedang dirawat di bangsal ini."} Cari pasien lain dengan nama atau nomor RM.
+            {poli ? "Belum ada pasien terdaftar di poli ini hari ini." : "Tidak ada pasien yang sedang dirawat di bangsal ini."} Cari pasien lain dengan nama, nomor RM atau no. rawat.
           </p>
         )}
       </section>
@@ -87,8 +87,8 @@ function SearchForm({ q }: { q: string }) {
         name="q"
         defaultValue={q}
         className="field pl-12"
-        placeholder="Cari nama atau nomor RM"
-        aria-label="Cari pasien dengan nama atau nomor RM"
+        placeholder="Nama, no. RM atau no. rawat"
+        aria-label="Cari pasien dengan nama, nomor RM atau no. rawat"
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}

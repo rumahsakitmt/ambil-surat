@@ -78,9 +78,22 @@ export async function patients(run: Run, today: string, room: { kind: string; co
 }
 
 /** Any patient of the hospital, by part of the name or the whole record number. */
+/** Khanza's visit number: the registration date and a sequence, "2026/10/23/000123". */
+const NO_RAWAT = /^\d{4}\/\d{2}\/\d{2}\/\d{1,6}$/;
+
 export async function search(run: Run, query: string) {
   const q = query.trim().slice(0, 60);
   if (q.length < 3) return [];
+  if (NO_RAWAT.test(q)) {
+    // A visit: its patient, with the poli and day so the nurse can tell it is the right one.
+    const rows = await run(
+      `select ${PATIENT}, concat('No. rawat ', reg_periksa.no_rawat, ' · ', ifnull(poliklinik.nm_poli, reg_periksa.kd_poli), ' · ', date_format(reg_periksa.tgl_registrasi,'%d-%m-%Y')) as info ` +
+        "from reg_periksa inner join pasien on pasien.no_rkm_medis=reg_periksa.no_rkm_medis " +
+        "left join poliklinik on poliklinik.kd_poli=reg_periksa.kd_poli where reg_periksa.no_rawat=?",
+      [q],
+    );
+    return rows.map(patient);
+  }
   const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
   const rows = await run(
     `select ${PATIENT}, pasien.alamat as info from pasien where pasien.nm_pasien like ? or pasien.no_rkm_medis=? order by pasien.nm_pasien limit 30`,

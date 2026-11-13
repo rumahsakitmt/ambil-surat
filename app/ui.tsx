@@ -104,7 +104,7 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
           return (
             <li key={letter.value} className="rise" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
               <label
-                className={`tile relative flex h-full min-h-36 cursor-pointer flex-col justify-between gap-4 transition-[box-shadow,transform] duration-150 select-none active:scale-[0.985] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink ${LETTER_TONES[letter.type].tile} ${on ? "shadow-[inset_0_0_0_2.5px_var(--color-ink)]" : ""}`}
+                className={`tile relative flex h-full min-h-36 cursor-pointer flex-col justify-between gap-4 transition-transform duration-150 select-none active:scale-[0.985] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink ${LETTER_TONES[letter.type].tile} ${on ? "outline-[2.5px] -outline-offset-[2.5px] outline-ink outline-solid" : ""}`}
               >
                 <input type="checkbox" name="item" value={letter.value} checked={on} onChange={() => toggle(letter.value)} className="peer sr-only" />
                 <span
@@ -141,7 +141,7 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
 function SubmitShare({ count }: { count: number }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn w-full justify-between pr-3 pl-6 shadow-[0_12px_28px_-12px_rgb(29_35_31/0.45)]" disabled={pending || count === 0}>
+    <button type="submit" className="btn w-full justify-between pr-3 pl-6" disabled={pending || count === 0}>
       <span>{pending ? "Menyiapkan QR…" : count === 0 ? "Pilih surat dulu" : `Buat QR · ${count} surat`}</span>
       <span className="grid size-10 place-items-center rounded-full bg-white/70 text-base leading-none" aria-hidden="true">
         ›››

@@ -72,7 +72,7 @@ async function Share({ params }: Pick<PageProps<"/ruang/bagikan/[id]">, "params"
         <div
           role="img"
           aria-label="Kode QR untuk membuka surat"
-          className="aspect-square w-full max-w-72 rounded-[1.5rem] bg-white p-5 shadow-[0_14px_30px_-18px_rgb(29_35_31/0.5)] [&>svg]:size-full"
+          className="aspect-square w-full max-w-72 rounded-[1.5rem] bg-white p-5 [&>svg]:size-full"
           dangerouslySetInnerHTML={{ __html: qrSvg(url) }}
         />
         <p className="text-sm text-ink/75 text-pretty">

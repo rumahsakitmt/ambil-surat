@@ -53,7 +53,7 @@ export function PatientList({ patients, today }: { patients: Patient[]; today: s
               <span className="block truncate text-[13px] text-muted">
                 RM {p.noRm} · {p.sex === "P" ? "Perempuan" : "Laki-laki"} · {age(p.dob, today)} · {shortDate(p.dob)}
               </span>
-              {p.info && <span className="block truncate text-[13px] text-muted">{p.info}</span>}
+              {p.info && <span className="line-clamp-2 block text-[13px] text-muted">{p.info}</span>}
             </span>
             <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paper text-muted" aria-hidden="true">
               <IconChevron className="size-4" />

@@ -26,7 +26,7 @@ Letters in this version, laid out as SIMRS Khanza prints them:
 
 ## Who uses it
 
-- **Rooms** (`/ruang`): one shared account per poli or ward. The first screen lists today's patients of that poli, or the patients in that ward; a search finds any patient by name or record number. A patient's page lists their letters from the last 30 days (older ones a tap away), with today's ticked. *Buat QR* shows the QR; *Sudah dibagikan* lists what still works and revokes it.
+- **Rooms** (`/ruang`): one shared account per poli or ward. The first screen lists today's patients of that poli, or the patients in that ward; a search finds any patient by name, record number or visit number (no. rawat, such as `2026/10/23/000123`). A patient's page lists their letters from the last 30 days (older ones a tap away), with today's ticked. *Buat QR* shows the QR; *Sudah dibagikan* lists what still works and revokes it.
 - **Admin** (`/admin`): creates, resets and removes room accounts, sees whether the bridge is connected, and reads the sharing log (room, patient, letters, time). The first person to open `/masuk` on a new deployment creates the admin account.
 - **Patients and families** (`/s/<token>`): scan, type the date of birth, view and download. Five wrong dates lock the QR for good; the room can share again.
 

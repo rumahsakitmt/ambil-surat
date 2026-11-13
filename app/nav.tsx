@@ -35,7 +35,7 @@ function CurrentBar(props: Props) {
 function Bar({ items, label, current }: Props & { current: string | undefined }) {
   return (
     <nav aria-label={label} className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div className="flex items-center gap-1 rounded-full bg-card/95 p-1.5 shadow-[0_10px_30px_-10px_rgb(29_35_31/0.35)] ring-1 ring-line backdrop-blur">
+      <div className="flex items-center gap-1 rounded-full bg-card/95 p-1.5 ring-1 ring-line backdrop-blur">
         {items.map((item) => {
           const Icon = ICONS[item.icon];
           const active = item.href === current;
