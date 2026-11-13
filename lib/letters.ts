@@ -30,6 +30,11 @@ export const TITLES: Record<LetterType, string> = {
   kematian: "Surat Kematian",
 };
 
+/** The file name a letter is saved under, safe on every phone ("Surat Keterangan Sakit 2026-SKS-0012.pdf"). */
+export function pdfName(type: LetterType, noSurat: string) {
+  return `${TITLES[type]} ${noSurat}`.replace(/[^A-Za-z0-9 ._-]/g, "-") + ".pdf";
+}
+
 type Align = "left" | "center" | "right";
 type Op =
   | { k: "text"; x: number; y: number; text: string; size: number; bold: boolean; width: number; underline: boolean }

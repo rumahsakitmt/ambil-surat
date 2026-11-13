@@ -3,11 +3,11 @@ import { Suspense } from "react";
 import { api, convex, secret } from "@/lib/convex";
 import { requestTime } from "@/lib/clock";
 import { LETTER_TONES, dayMonth } from "@/lib/format";
-import { TITLES, letterSvg, type Letter } from "@/lib/letters";
+import { TITLES, letterSvg, pdfName, type Letter } from "@/lib/letters";
 import { hasOpened } from "@/lib/session";
 import { Brand } from "../../brand";
 import { IconClock, IconDownload, IconLock } from "../../icons";
-import { DobForm, Refresher } from "../../ui";
+import { DobForm, DownloadPdf, Refresher } from "../../ui";
 
 export const metadata: Metadata = { title: "Surat Anda", referrer: "no-referrer" };
 
@@ -88,9 +88,9 @@ async function Share({ params }: Pick<PageProps<"/s/[token]">, "params">) {
               <h2 className="font-extrabold tracking-tight">{TITLES[letter.type]}</h2>
               <p className="truncate font-mono text-xs text-ink/60">{letter.noSurat}</p>
             </div>
-            <a href={`/s/${token}/pdf/${i + 1}`} download className="btn min-h-11 shrink-0 bg-white px-4 text-sm hover:bg-white/80">
+            <DownloadPdf href={`/s/${token}/pdf/${i + 1}`} filename={pdfName(letter.type, letter.noSurat)}>
               <IconDownload className="size-4" /> PDF
-            </a>
+            </DownloadPdf>
           </header>
           {/* The letter as SIMRS prints it; pinch to zoom. */}
           <div className="overflow-hidden rounded-[1.35rem] bg-white" dangerouslySetInnerHTML={{ __html: sheets[i].svg }} />

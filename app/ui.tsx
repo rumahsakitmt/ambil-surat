@@ -223,6 +223,56 @@ export function PasswordForm({ id, own }: { id: string; own: boolean }) {
   );
 }
 
+/**
+ * Saves one letter's PDF on the phone. A plain link only opens the PDF in the
+ * browser on many phones, so the file is fetched here and then handed over:
+ * on iPhone through the share sheet ("Simpan ke File", WhatsApp…), elsewhere
+ * as a real download. Without JavaScript the link still works.
+ */
+export function DownloadPdf({ href, filename, children }: { href: string; filename: string; children: React.ReactNode }) {
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function save(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const response = await fetch(href);
+      if (!response.ok) throw new Error(await response.text());
+      const file = new File([await response.blob()], filename, { type: "application/pdf" });
+      const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (ios && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: filename });
+        } catch (error) {
+          if ((error as Error).name !== "AbortError") throw error;
+        }
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const link = Object.assign(document.createElement("a"), { href: url, download: filename });
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setFailed(true);
+      // Fall back to opening the PDF, which phones can still save from their viewer.
+      window.location.href = href;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <a href={href} download={filename} onClick={save} aria-busy={busy} className="btn min-h-11 shrink-0 bg-white px-4 text-sm hover:bg-white/80">
+      {busy ? "Menyiapkan…" : failed ? "Coba lagi" : children}
+    </a>
+  );
+}
+
 const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 /** What the patient or their family fills in after scanning: the patient's date of birth. */
