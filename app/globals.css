@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-paper: #f4f6f3;
+  --color-card: #ffffff;
+  --color-ink: #13211d;
+  --color-muted: #5d6b66;
+  --color-line: #dfe5e1;
+  --color-brand: #0e6b5e;
+  --color-brand-strong: #0a5449;
+  --color-brand-soft: #e3f1ed;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fdf3dc;
+  --color-danger: #a3271f;
+  --color-danger-soft: #fdecea;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .page {
+    @apply mx-auto w-full max-w-xl px-4 pb-16 pt-5;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-card;
+  }
+  .btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-base font-semibold text-white transition-colors select-none;
+    @apply hover:bg-brand-strong active:bg-brand-strong disabled:opacity-50;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+  }
+  .btn-quiet {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition-colors select-none;
+    @apply hover:bg-paper active:bg-paper disabled:opacity-50;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+  }
+  .btn-danger {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-danger/30 bg-card px-4 text-sm font-medium text-danger transition-colors select-none;
+    @apply hover:bg-danger-soft active:bg-danger-soft disabled:opacity-50;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger;
+  }
+  .field {
+    /* 16px text, so iPhones don't zoom the page on focus. */
+    @apply min-h-12 w-full rounded-xl border border-line bg-card px-4 text-base text-ink placeholder:text-muted/70;
+    @apply focus:border-brand focus:outline-2 focus:outline-brand/25;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .note-warn {
+    @apply rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn;
+  }
+  .note-danger {
+    @apply rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger;
+  }
+  .note-ok {
+    @apply rounded-xl bg-brand-soft px-4 py-3 text-sm text-brand-strong;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-xl bg-line/70;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
