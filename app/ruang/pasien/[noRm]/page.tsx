@@ -26,7 +26,7 @@ async function Letters({ params, searchParams }: Pick<PageProps<"/ruang/pasien/[
       {letters.length === 0 ? (
         <div className="card p-4 text-sm text-muted">
           <p className="font-medium text-ink">{all ? "Pasien ini belum punya surat di SIMRS." : "Tidak ada surat dalam 30 hari terakhir."}</p>
-          <p className="mt-1">Surat kontrol, surat sakit dan surat sehat muncul di sini setelah dibuat di SIMRS.</p>
+          <p className="mt-1">Surat kontrol, surat sakit, surat sehat dan surat kematian muncul di sini setelah dibuat di SIMRS.</p>
         </div>
       ) : (
         <>

@@ -21,7 +21,7 @@ export default function Home() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-balance">Surat dari rumah sakit, langsung di HP Anda.</h1>
         <p className="mt-3 text-muted text-pretty">
-          Minta perawat menampilkan kode QR, lalu pindai dengan kamera HP. Surat kontrol, surat keterangan sakit dan surat keterangan sehat bisa dilihat dan diunduh.
+          Minta perawat menampilkan kode QR, lalu pindai dengan kamera HP. Surat kontrol, surat keterangan sakit, surat keterangan sehat dan surat kematian bisa dilihat dan diunduh.
         </p>
       </div>
       <ol className="card divide-y divide-line">

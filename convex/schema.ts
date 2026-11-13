@@ -7,7 +7,7 @@ export const room = v.object({
   name: v.string(),
 });
 
-export const letterType = v.union(v.literal("kontrol"), v.literal("sakit"), v.literal("sehat"));
+export const letterType = v.union(v.literal("kontrol"), v.literal("sakit"), v.literal("sehat"), v.literal("kematian"));
 
 export const shareItem = v.object({
   type: letterType,

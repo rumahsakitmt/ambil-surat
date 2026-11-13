@@ -42,6 +42,11 @@ Needs Node 22.18 or newer.
    GRANT SELECT ON sik.surat_keterangan_sehat TO 'ambil_surat'@'%';
    GRANT SELECT ON sik.bridging_sep TO 'ambil_surat'@'%';
    GRANT SELECT ON sik.bridging_surat_kontrol_bpjs TO 'ambil_surat'@'%';
+   GRANT SELECT ON sik.pasien_mati TO 'ambil_surat'@'%';
+   -- Optional: the surat kematian's QR carries the hash of the doctor's fingerprint, as Khanza prints it.
+   -- Only the hash is read. Without these the doctor's code is used instead, as Khanza does when there is no fingerprint.
+   GRANT SELECT ON sik.sidikjari TO 'ambil_surat'@'%';
+   GRANT SELECT ON sik.pegawai TO 'ambil_surat'@'%';
    ```
 
    The bridge refuses to start with a user that can change data, and names any of these tables it cannot read.
@@ -65,7 +70,7 @@ Needs Node 22.18 or newer.
 
 ## The verification QR
 
-Surat sakit and surat sehat carry the same QR Khanza prints: a link to Khanza's verify page (`VERIFY_URL`) with the letter number encrypted the way `EnkripsiAES.encrypt` does it. `KHANZA_AES_KEY` and `KHANZA_AES_IV` are the two 16-character strings in `KhanzaSecurity16bit/src/AESsecurity/EnkripsiAES.java`. The surat rencana kontrol carries Khanza's signature text instead, as its printout does.
+Surat sakit and surat sehat carry the same QR Khanza prints: a link to Khanza's verify page (`VERIFY_URL`) with the letter number encrypted the way `EnkripsiAES.encrypt` does it. `KHANZA_AES_KEY` and `KHANZA_AES_IV` are the two 16-character strings in `KhanzaSecurity16bit/src/AESsecurity/EnkripsiAES.java`. The surat rencana kontrol and the surat kematian carry Khanza's signature text instead, as their printouts do.
 
 ## Notes
 

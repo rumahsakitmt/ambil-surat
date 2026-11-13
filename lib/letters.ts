@@ -10,7 +10,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage } from "pd
  * download. So what a patient sees is what they get on paper.
  */
 
-export type LetterType = "kontrol" | "sakit" | "sehat";
+export type LetterType = "kontrol" | "sakit" | "sehat" | "kematian";
 export type Letter = { type: LetterType; noSurat: string; data: Record<string, string> };
 export type Hospital = {
   name: string;
@@ -27,6 +27,7 @@ export const TITLES: Record<LetterType, string> = {
   kontrol: "Surat Rencana Kontrol",
   sakit: "Surat Keterangan Sakit",
   sehat: "Surat Keterangan Sehat",
+  kematian: "Surat Kematian",
 };
 
 type Align = "left" | "center" | "right";
@@ -65,7 +66,8 @@ async function code(bcid: "qrcode" | "code128", text: string) {
   return `data:image/png;base64,${Buffer.from(png).toString("base64")}`;
 }
 
-type TextOptions = { size?: number; bold?: boolean; align?: Align; middle?: boolean; underline?: boolean; wrap?: boolean };
+/** `spacing` is the line height as a multiple of the size (Jasper's "1_1_2" is 1.5). */
+type TextOptions = { size?: number; bold?: boolean; align?: Align; middle?: boolean; underline?: boolean; wrap?: boolean; spacing?: number };
 
 /** A sheet being drawn on, in the report file's own coordinates (inside the page margins). */
 function sheet(width: number, height: number, margin: { left: number; top: number }, fonts: Fonts) {
@@ -77,7 +79,7 @@ function sheet(width: number, height: number, margin: { left: number; top: numbe
     ops,
     /** Text in a box, as a report's text field: top-left by default, wrapped when asked. */
     text(x: number, y: number, w: number, h: number, value: string, options: TextOptions = {}) {
-      const { size = 11, bold = false, align = "left", middle = false, underline = false, wrap = false } = options;
+      const { size = 11, bold = false, align = "left", middle = false, underline = false, wrap = false, spacing = 1.2 } = options;
       const font = bold ? fonts.bold : fonts.regular;
       const measure = (s: string) => font.widthOfTextAtSize(s, size);
       const lines: string[] = [];
@@ -94,7 +96,7 @@ function sheet(width: number, height: number, margin: { left: number; top: numbe
         }
         if (line) lines.push(line);
       }
-      const leading = size * 1.2;
+      const leading = size * spacing;
       const top = middle ? y + Math.max(0, (h - leading) / 2) : y;
       lines.forEach((line, i) => {
         const width = measure(line);
@@ -273,6 +275,60 @@ async function sehat(d: Record<string, string>, hospital: Hospital, fonts: Fonts
   return s;
 }
 
+async function kematian(d: Record<string, string>, hospital: Hospital, fonts: Fonts): Promise<Sheet> {
+  const s = sheet(595, 842, { left: 20, top: 20 }, fonts);
+  const centre = { align: "center" as const };
+  s.image(1, 1, 51, 51, "logo");
+  s.text(1, 1, 548, 15, hospital.name, { size: 12, ...centre });
+  s.text(1, 16, 548, 10, `${hospital.address}, ${hospital.city}`, { size: 8, ...centre });
+  s.text(1, 25, 548, 10, hospital.contact, { size: 8, ...centre });
+  s.text(1, 34, 548, 10, `Email : ${hospital.email}`, { size: 8, ...centre });
+  s.text(1, 43, 548, 10, hospital.province, { size: 8, ...centre });
+  s.line(0, 55, 549);
+  s.text(0, 72, 549, 27, "SURAT KEMATIAN", { size: 12, middle: true, ...centre });
+  s.text(0, 109, 52, 14, "Nomor");
+  s.text(52, 109, 3, 14, ":");
+  s.text(60, 109, 140, 14, d.noSurat);
+  s.line(60, 124, 140);
+  s.text(0, 130, 52, 14, "Lamp.");
+  s.text(52, 130, 3, 14, ":");
+  s.line(60, 144, 140);
+  // The report's box cuts off the rest of this line ("bahwa :"), so the printout ends here.
+  s.text(0, 168, 257, 14, "Yang bertanda tangan di bawah ini menerangkan");
+  // The report's age box is only wide enough for the years of "40 Th 3 Bl 12 Hr".
+  const years = /^\s*\d+\s*Th/i.exec(d.umur)?.[0] ?? d.umur;
+  const rows: [string, number][] = [
+    ["Nama", 197],
+    ["Umur", 218],
+    ["Alamat", 239],
+  ];
+  for (const [name, y] of rows) {
+    s.text(40, y, 53, 14, name);
+    s.text(93, y, 3, 14, ":");
+    s.line(103, y + 15, 444);
+  }
+  s.text(103, 197, 444, 14, d.nama);
+  s.text(103, 218, 40, 14, years);
+  s.text(143, 218, 25, 14, "th. (");
+  s.text(168, 218, 37, 14, d.jk, centre);
+  s.text(205, 218, 15, 14, ")");
+  s.text(103, 239, 444, 14, d.alamat);
+  s.text(
+    0,
+    271,
+    549,
+    89,
+    `Telah meninggal dunia pada tanggal ${d.tanggal} jam ${d.jam} di ${hospital.name} dikarenakan ${d.keterangan}. Demikian surat keterangan ini dibuat agar menjadikan maklum dan dapat dipergunakan sebagaimana mestinya`,
+    { wrap: true, spacing: 1.5 * 1.2 },
+  );
+  s.text(350, 374, 199, 14, `${hospital.city}, ${d.tanggal}`, centre);
+  s.text(350, 393, 199, 14, "Dokter Pemeriksa", centre);
+  await s.qr(350, 409, 199, 59, d.finger);
+  s.text(350, 468, 199, 14, d.dokter, centre);
+  s.line(350, 482, 199);
+  return s;
+}
+
 /** "13/11/2026 10:32:23 AM", in the hospital's time zone. */
 function printedNow() {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -293,6 +349,7 @@ async function layout(letter: Letter, hospital: Hospital): Promise<Sheet> {
   const fonts = await metrics();
   if (letter.type === "kontrol") return kontrol(letter.data, hospital, fonts, printedNow());
   if (letter.type === "sakit") return sakit(letter.data, hospital, fonts);
+  if (letter.type === "kematian") return kematian(letter.data, hospital, fonts);
   return sehat(letter.data, hospital, fonts);
 }
 

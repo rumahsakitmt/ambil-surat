@@ -9,14 +9,14 @@ import { createCipheriv } from "node:crypto";
 
 export type Run = (sql: string, params?: unknown[]) => Promise<Record<string, string | null>[]>;
 
-export type LetterType = "kontrol" | "sakit" | "sehat";
+export type LetterType = "kontrol" | "sakit" | "sehat" | "kematian";
 export type Item = { type: LetterType; noSurat: string };
 
 /** The tables the bridge's database user must be able to read (see README.md). */
 export const TABLES = [
   "setting", "gambar", "poliklinik", "bangsal", "kamar", "kamar_inap", "reg_periksa", "pasien", "dokter",
   "kelurahan", "kecamatan", "kabupaten", "perusahaan_pasien", "diagnosa_pasien", "penyakit",
-  "suratsakit", "surat_keterangan_sehat", "bridging_sep", "bridging_surat_kontrol_bpjs",
+  "suratsakit", "surat_keterangan_sehat", "bridging_sep", "bridging_surat_kontrol_bpjs", "pasien_mati",
 ];
 
 const text = (value: unknown) => (value == null ? "" : String(value).trim());
@@ -89,11 +89,11 @@ export async function search(run: Run, query: string) {
   return rows.map(patient);
 }
 
-/** A patient's letters of the three kinds: the last 30 days (and control dates still ahead), or all of them. */
+/** A patient's letters of the four kinds: the last 30 days (and control dates still ahead), or all of them. */
 export async function letters(run: Run, today: string, noRm: string, all: boolean) {
   const since = (column: string) => (all ? "" : ` and ${column}>=date_sub(?, interval 30 day)`);
   const p = all ? [noRm] : [noRm, today];
-  const [who, kontrol, sakit, sehat] = await Promise.all([
+  const [who, kontrol, sakit, sehat, kematian] = await Promise.all([
     run(`select ${PATIENT}, '' as info from pasien where pasien.no_rkm_medis=?`, [noRm]),
     run(
       "select bridging_surat_kontrol_bpjs.no_surat, date_format(bridging_surat_kontrol_bpjs.tgl_surat,'%Y-%m-%d') as date, " +
@@ -116,6 +116,12 @@ export async function letters(run: Run, today: string, noRm: string, all: boolea
         `where reg_periksa.no_rkm_medis=?${since("surat_keterangan_sehat.tanggalsurat")} order by surat_keterangan_sehat.tanggalsurat desc limit 50`,
       p,
     ),
+    // One per patient: its "number" is the record number, as Khanza prints it.
+    run(
+      "select pasien_mati.no_rkm_medis as no_surat, date_format(pasien_mati.tanggal,'%Y-%m-%d') as date, pasien_mati.keterangan " +
+        `from pasien_mati where pasien_mati.no_rkm_medis=?${since("pasien_mati.tanggal")}`,
+      p,
+    ),
   ]);
   if (!who[0]) return null;
   const list = [
@@ -123,6 +129,7 @@ export async function letters(run: Run, today: string, noRm: string, all: boolea
     ...kontrol.map((r) => ({ type: "kontrol" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.poli), rencana: text(r.rencana) })),
     ...sakit.map((r) => ({ type: "sakit" as const, noSurat: text(r.no_surat), date: text(r.date), detail: `Istirahat ${text(r.lamasakit)} hari` })),
     ...sehat.map((r) => ({ type: "sehat" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.keperluan) })),
+    ...kematian.map((r) => ({ type: "kematian" as const, noSurat: text(r.no_surat), date: text(r.date), detail: text(r.keterangan) })),
   ].sort((a, b) => b.date.localeCompare(a.date));
   return { patient: patient(who[0]), today, letters: list };
 }
@@ -160,6 +167,35 @@ async function letter(run: Run, noRm: string, item: Item, hospital: Hospital, li
       diagnosa: text(r.nmdiagnosaawal),
       // The text Khanza puts in this letter's QR.
       finger: `Dikeluarkan di ${hospital.name}, Kabupaten/Kota ${hospital.city}\nDitandatangani secara elektronik oleh ${text(r.nm_dokter_bpjs)}\nID ${text(r.tgl_surat)}\n${d}-${m}-${y}`,
+    };
+  }
+  if (item.type === "kematian") {
+    // rptSuratKematian2, as DlgPasienMati prints it.
+    const [r] = await run(
+      "select pasien_mati.no_rkm_medis, date_format(pasien_mati.tanggal,'%d-%m-%Y') as tanggal, time_format(pasien_mati.jam,'%H:%i:%s') as jam, " +
+        "pasien_mati.keterangan, pasien_mati.kd_dokter, dokter.nm_dokter, pasien.nm_pasien, pasien.jk, pasien.umur, pasien.alamat " +
+        "from pasien_mati inner join pasien on pasien_mati.no_rkm_medis=pasien.no_rkm_medis inner join dokter on pasien_mati.kd_dokter=dokter.kd_dokter " +
+        "where pasien_mati.no_rkm_medis=? and pasien_mati.no_rkm_medis=?",
+      [item.noSurat, noRm],
+    );
+    if (!r) return null;
+    // Khanza signs with the hash of the doctor's fingerprint when it has one, else the doctor's code.
+    // Only the hash is read; without access to those tables the code is used, as Khanza does.
+    const [print] = await run(
+      "select sha1(sidikjari.sidikjari) as id from sidikjari inner join pegawai on pegawai.id=sidikjari.id where pegawai.nik=?",
+      [text(r.kd_dokter)],
+    ).catch(() => []);
+    return {
+      noSurat: text(r.no_rkm_medis),
+      nama: text(r.nm_pasien),
+      umur: text(r.umur),
+      jk: text(r.jk),
+      alamat: text(r.alamat),
+      tanggal: text(r.tanggal),
+      jam: text(r.jam),
+      keterangan: text(r.keterangan),
+      dokter: text(r.nm_dokter),
+      finger: `Dikeluarkan di ${hospital.name}, Kabupaten/Kota ${hospital.city}\nDitandatangani secara elektronik oleh ${text(r.nm_dokter)}\nID ${text(print?.id) || text(r.kd_dokter)}\n${text(r.tanggal)}`,
     };
   }
   if (item.type === "sakit") {

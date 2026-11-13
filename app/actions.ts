@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
 import { api, convex, secret } from "@/lib/convex";
+import { LETTER_NAMES, type LetterType } from "@/lib/format";
 import {
   checkPassword,
   endSession,
@@ -62,7 +63,7 @@ export async function shareLetters(_: FormState, form: FormData): Promise<FormSt
   const items = form
     .getAll("item")
     .map((value) => String(value).split("|"))
-    .filter((parts): parts is ["kontrol" | "sakit" | "sehat", string, string] => parts.length === 3 && ["kontrol", "sakit", "sehat"].includes(parts[0]))
+    .filter((parts): parts is [LetterType, string, string] => parts.length === 3 && parts[0] in LETTER_NAMES)
     .map(([type, noSurat, date]) => ({ type, noSurat, date }));
   if (!noRm || items.length === 0) return { error: "Centang minimal satu surat." };
   const id = await convex.mutation(api.shares.create, { secret, accountId: account.id, token: randomToken(), noRm, items });

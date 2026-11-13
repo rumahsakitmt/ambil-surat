@@ -15,7 +15,7 @@ export const convex = new ConvexHttpClient(url);
 export { api };
 
 export type Patient = { noRm: string; name: string; dob: string; sex: string; info: string };
-export type LetterRow = { type: "kontrol" | "sakit" | "sehat"; noSurat: string; date: string; detail: string; rencana?: string };
+export type LetterRow = { type: "kontrol" | "sakit" | "sehat" | "kematian"; noSurat: string; date: string; detail: string; rencana?: string };
 export type RoomOption = { code: string; name: string };
 type Answers = {
   rooms: { poli: RoomOption[]; bangsal: RoomOption[] };

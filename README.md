@@ -7,6 +7,7 @@ Letters in this version, laid out as SIMRS Khanza prints them:
 - Surat Rencana Kontrol (BPJS)
 - Surat Keterangan Sakit
 - Surat Keterangan Sehat
+- Surat Kematian
 
 ## How it fits together
 

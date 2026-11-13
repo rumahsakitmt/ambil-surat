@@ -34,5 +34,6 @@ export const LETTER_NAMES = {
   kontrol: "Surat Rencana Kontrol",
   sakit: "Surat Keterangan Sakit",
   sehat: "Surat Keterangan Sehat",
+  kematian: "Surat Kematian",
 } as const;
 export type LetterType = keyof typeof LETTER_NAMES;
