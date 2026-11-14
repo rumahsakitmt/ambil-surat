@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, createHmac, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
 import { api, convex, secret } from "./convex";
@@ -52,12 +53,12 @@ export async function sessionToken() {
   return token ? sha256(token) : null;
 }
 
-/** Who is signed in on this phone, if anyone. */
-export async function getAccount() {
+/** Who is signed in on this phone, if anyone: asked once per request, however many parts of the page need it. */
+export const getAccount = cache(async () => {
   const token = await sessionToken();
   if (!token) return null;
   return await convex.query(api.accounts.current, { secret, token });
-}
+});
 
 /** For the rooms' pages: a room account, or off to sign in. */
 export async function requireRoom() {

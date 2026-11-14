@@ -1,7 +1,7 @@
 import { Button } from "@ui-sdk/react/button";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { api, convex, secret } from "@/lib/convex";
+import { getHospital } from "@/lib/convex";
 import { requestTime } from "@/lib/clock";
 import { requireAdmin } from "@/lib/session";
 import { signOut } from "../actions";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Admin" };
 /** Whether the bridge at the hospital answers, always in view at the foot of the sidebar. */
 async function Bridge() {
   await requireAdmin();
-  const [hospital, now] = await Promise.all([convex.query(api.hospital.get, { secret }), requestTime()]);
+  const [hospital, now] = await Promise.all([getHospital(), requestTime()]);
   const alive = !!hospital && now - hospital.seenAt < 90_000;
   return (
     <p className={`flex items-center gap-2 rounded-[0.625rem] px-3 py-2 text-[13px] font-semibold ${alive ? "bg-mint text-brand-strong" : "bg-danger-soft text-danger"}`}>

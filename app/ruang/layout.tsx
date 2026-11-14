@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { api, convex, secret } from "@/lib/convex";
+import { getHospital } from "@/lib/convex";
 import { requireRoom } from "@/lib/session";
 import { requestTime } from "@/lib/clock";
 import { Avatar } from "../brand";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Ruangan" };
 /** "Halo, Poliklinik Obgyn" with the room's avatar, and a dot that says whether SIMRS answers. */
 async function Greeting() {
   const account = await requireRoom();
-  const [hospital, now] = await Promise.all([convex.query(api.hospital.get, { secret }), requestTime()]);
+  const [hospital, now] = await Promise.all([getHospital(), requestTime()]);
   const online = !!hospital && now - hospital.seenAt < 90_000;
   return (
     <>

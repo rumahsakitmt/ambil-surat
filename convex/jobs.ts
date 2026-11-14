@@ -1,35 +1,40 @@
 import { v } from "convex/values";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { fromApp } from "./lib";
 
 /** A question nobody answered in this long is dropped (the bridge is away). */
 const MAX_AGE = 2 * 60 * 1000;
 
-/** Asks the bridge something: `rooms`, `patients`, `search` or `letters`. */
+/** The bridge beats every half minute; silent for longer than this, it is away. */
+const ALIVE = 90_000;
+
+/**
+ * Asks the bridge something: `rooms`, `patients`, `search` or `letters`.
+ * Null when the bridge is away, so nobody waits for an answer that can't come.
+ */
 export const ask = mutation({
   args: { secret: v.string(), kind: v.string(), args: v.any() },
   handler: async (ctx, { secret, kind, args }) => {
     fromApp(secret);
+    const hospital = await ctx.db.query("hospital").first();
+    if (!hospital || Date.now() - hospital.seenAt > ALIVE) return null;
     return await ctx.db.insert("jobs", { kind, args, status: "pending", createdAt: Date.now() });
   },
 });
 
-/** The bridge's answer, once there is one. Reading it removes it. */
-export const take = mutation({
+/** Where a question stands. The app subscribes to it, so the answer reaches it the moment the bridge sends it. */
+export const status = query({
   args: { secret: v.string(), id: v.id("jobs") },
   handler: async (ctx, { secret, id }) => {
     fromApp(secret);
     const job = await ctx.db.get(id);
-    if (!job) return { status: "error" as const, error: "gone" };
+    if (!job) return { status: "error" as const };
     if (job.status === "pending") return { status: "pending" as const };
-    await ctx.db.delete(id);
-    return job.status === "done"
-      ? { status: "done" as const, result: job.result }
-      : { status: "error" as const, error: job.error ?? "error" };
+    return job.status === "done" ? { status: "done" as const, result: job.result } : { status: "error" as const };
   },
 });
 
-/** Gives up on a question the app stopped waiting for. */
+/** Removes a question once the app has its answer, or stopped waiting for one. */
 export const drop = mutation({
   args: { secret: v.string(), id: v.id("jobs") },
   handler: async (ctx, { secret, id }) => {

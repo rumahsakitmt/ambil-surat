@@ -1,4 +1,5 @@
 import { Input } from "@ui-sdk/react/input";
+import Form from "next/form";
 import Link from "next/link";
 import { Suspense } from "react";
 import { api, ask, convex, secret } from "@/lib/convex";
@@ -58,8 +59,11 @@ async function Patients({ searchParams }: Search) {
     );
   }
 
-  const [list, now] = await Promise.all([ask("patients", { room: { kind: account.room.kind, code: account.room.code } }), requestTime()]);
-  const shared = await convex.query(api.shares.active, { secret, accountId: account.id, now });
+  const now = await requestTime();
+  const [list, shared] = await Promise.all([
+    ask("patients", { room: { kind: account.room.kind, code: account.room.code } }),
+    convex.query(api.shares.active, { secret, accountId: account.id, now }),
+  ]);
   const poli = account.room.kind === "poli";
   if (!list.ok) return <Unreachable offline={list.offline} />;
   return (
@@ -81,7 +85,7 @@ async function Patients({ searchParams }: Search) {
 
 function SearchForm({ q }: { q: string }) {
   return (
-    <form action="/ruang" role="search" className="relative">
+    <Form action="/ruang" role="search" className="relative">
       <IconSearch className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted" />
       <Input
         type="search"
@@ -95,7 +99,7 @@ function SearchForm({ q }: { q: string }) {
         spellCheck={false}
         enterKeyHint="search"
       />
-    </form>
+    </Form>
   );
 }
 

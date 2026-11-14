@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { api, ask, convex, secret } from "@/lib/convex";
+import { api, ask, convex, getHospital, secret } from "@/lib/convex";
 import { requestTime } from "@/lib/clock";
 import { dateTime, dayKey } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
@@ -29,7 +29,7 @@ async function NewRoom() {
 async function Dashboard() {
   const admin = await requireAdmin();
   const [hospital, accounts, log, now] = await Promise.all([
-    convex.query(api.hospital.get, { secret }),
+    getHospital(),
     convex.query(api.accounts.list, { secret }),
     convex.query(api.hospital.log, { secret }),
     requestTime(),

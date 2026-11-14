@@ -220,15 +220,15 @@ body {
 
   /* Tiles settle in one after another when a page opens. */
   .rise {
-    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--i, 0) * 55ms);
+    animation: rise 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(min(var(--i, 0), 4) * 30ms);
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
 }
 
