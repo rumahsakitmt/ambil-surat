@@ -1,3 +1,4 @@
+import { Input } from "@ui-sdk/react/input";
 import Link from "next/link";
 import { Suspense } from "react";
 import { api, ask, convex, secret } from "@/lib/convex";
@@ -82,11 +83,11 @@ function SearchForm({ q }: { q: string }) {
   return (
     <form action="/ruang" role="search" className="relative">
       <IconSearch className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted" />
-      <input
+      <Input
         type="search"
         name="q"
         defaultValue={q}
-        className="field pl-12"
+        className="pl-12"
         placeholder="Nama, no. RM atau no. rawat"
         aria-label="Cari pasien dengan nama, nomor RM atau no. rawat"
         autoComplete="off"

@@ -9,7 +9,7 @@ import { requireRoom } from "@/lib/session";
 import { revokeShare } from "../../../actions";
 import { LetterTag } from "../../../brand";
 import { IconClock } from "../../../icons";
-import { Refresher, Submit } from "../../../ui";
+import { ConfirmForm, Refresher } from "../../../ui";
 import { TitleBar } from "../../parts";
 
 export const metadata: Metadata = { title: "QR untuk pasien" };
@@ -97,12 +97,16 @@ async function Share({ params }: Pick<PageProps<"/ruang/bagikan/[id]">, "params"
       <Link href="/ruang" className="btn w-full">
         Selesai
       </Link>
-      <form action={revokeShare}>
-        <input type="hidden" name="id" value={share.id} />
-        <Submit className="btn-danger w-full" busy="Mencabut…">
-          Cabut QR ini
-        </Submit>
-      </form>
+      <ConfirmForm
+        action={revokeShare}
+        fields={{ id: share.id }}
+        trigger="Cabut QR ini"
+        triggerClassName="btn-danger w-full"
+        title={`Cabut QR ${share.patientName}?`}
+        description="QR ini langsung tidak bisa dibuka lagi dan suratnya dihapus dari sini. Surat di SIMRS tidak berubah."
+        confirm="Cabut QR"
+        busy="Mencabut…"
+      />
     </>
   );
 }

@@ -74,6 +74,20 @@ export const IconList = (p: Props) => (
     <circle cx="4.5" cy="17.5" r="1" />
   </Icon>
 );
+export const IconGrid = (p: Props) => (
+  <Icon {...p}>
+    <rect x="3.5" y="3.5" width="7" height="7" rx="2" />
+    <rect x="13.5" y="3.5" width="7" height="7" rx="2" />
+    <rect x="3.5" y="13.5" width="7" height="7" rx="2" />
+    <rect x="13.5" y="13.5" width="7" height="7" rx="2" />
+  </Icon>
+);
+export const IconKey = (p: Props) => (
+  <Icon {...p}>
+    <circle cx="8" cy="15" r="4" />
+    <path d="m11 12 8.5-8.5M16 7l2.5 2.5" />
+  </Icon>
+);
 export const IconPlus = (p: Props) => (
   <Icon {...p}>
     <path d="M12 5v14M5 12h14" />

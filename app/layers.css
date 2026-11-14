@@ -1,0 +1,6 @@
+/*
+ * Loaded first, so this order holds: ui-sdk's default look sits above
+ * Tailwind's reset (which would strip its borders, padding and margins) and
+ * below our own components and utilities.
+ */
+@layer theme, base, ui-sdk, components, utilities;

@@ -18,6 +18,9 @@ export const dateTime = (at: number) =>
     timeZone: ZONE,
   }).format(at);
 
+/** The hospital's calendar day of a moment, "2026-10-23", to tell what happened today. */
+export const dayKey = (at: number) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONE }).format(at);
+
 /** "Kamis, 30 Oktober". */
 export const dayMonth = (at: number) => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: ZONE }).format(at);
 

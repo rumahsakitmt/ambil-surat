@@ -1,3 +1,4 @@
+@layer theme, base, ui-sdk, components, utilities;
 @import "tailwindcss";
 
 /*
@@ -39,6 +40,113 @@
   --radius-tile: 1.75rem;
 }
 
+/*
+ * ui-sdk's default look, tuned to this app: light only, round, in the app's
+ * font, with text at 16px so iPhones don't zoom the page on focus. The admin
+ * dashboard is denser (see .admin below).
+ */
+:root {
+  color-scheme: light;
+  --ui-background: #ffffff;
+  --ui-foreground: #1d231f;
+  --ui-muted: #f3f4f0;
+  --ui-muted-foreground: #5f6761;
+  --ui-border: #e6e9e3;
+  --ui-input: #8f968e;
+  --ui-primary: #1d231f;
+  --ui-primary-foreground: #ffffff;
+  --ui-destructive: #a3271f;
+  --ui-ring: #cfe6bd;
+  --ui-ring-border: #3c7424;
+  --ui-overlay: rgb(29 35 31 / 0.45);
+  --ui-shadow: none;
+  --ui-radius: 1rem;
+  --ui-font-size: 1rem;
+  --ui-font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --ui-font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --control-h: 3.5rem;
+}
+
+.admin {
+  --ui-radius: 0.625rem;
+  --ui-font-size: 0.875rem;
+  --ui-primary: #2d5a1a;
+  --control-h: 2.5rem;
+}
+
+@layer components {
+  /* web.css underlines every link; ours are buttons, tiles and nav items that style themselves. */
+  a {
+    color: inherit;
+    text-decoration-line: none;
+  }
+  :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="password-input"]) {
+    height: var(--control-h);
+    padding-inline: 1rem;
+  }
+  .admin :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="password-input"]) {
+    padding-inline: 0.75rem;
+  }
+  [data-slot="password-input"] {
+    padding-inline-end: 0.5rem;
+  }
+  [data-slot="password-input-toggle"] {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+  }
+  [data-slot="field-label"] {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  :is([data-slot="field-error"], [data-slot="field-description"]) {
+    font-size: 0.8125rem;
+  }
+  :is([data-slot="select-item"], [data-slot="select-group-label"]) {
+    padding-block: 0.5rem;
+  }
+  [data-slot="select-group-label"] {
+    padding-inline: 0.5rem;
+    color: var(--ui-muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  [data-slot="select-content"] {
+    border-color: var(--ui-input);
+  }
+  [data-slot="select-content"][data-presentation="sheet"] {
+    padding: 0.5rem 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+  }
+  [data-slot="select-content"][data-presentation="sheet"] [data-slot="select-item"] {
+    min-height: 3rem;
+    padding-inline: 1rem;
+  }
+  :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
+    border-color: transparent;
+  }
+  :is([data-slot="dialog-title"], [data-slot="alert-dialog-title"]) {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  :is([data-slot="dialog-description"], [data-slot="alert-dialog-description"]) {
+    font-size: 0.875rem;
+    text-wrap: pretty;
+  }
+  .admin :is([data-slot="button"], [data-slot="dialog-trigger"], [data-slot="dialog-close"], [data-slot="alert-dialog-trigger"], [data-slot="alert-dialog-close"]) {
+    height: 2.25rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .admin [data-slot="segmented-control-item"] {
+    height: 2rem;
+  }
+  [data-slot="button"]:not([data-pending]) [data-show="pending"],
+  [data-slot="button"][data-pending] [data-show="idle"] {
+    display: none;
+  }
+}
+
 html {
   background: var(--color-paper);
   color: var(--color-ink);
@@ -69,18 +177,18 @@ body {
 
   /* The main action: a butter-yellow pill. */
   .btn {
-    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-butter px-6 text-base font-bold text-ink select-none;
-    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-butter-deep active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex h-auto min-h-14 items-center justify-center gap-2 rounded-full border-0 bg-butter px-6 text-base font-bold text-ink select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-butter-deep active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 data-disabled:pointer-events-none data-disabled:opacity-45;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
   }
   .btn-quiet {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-ink ring-1 ring-line select-none;
-    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-paper active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex h-auto min-h-11 items-center justify-center gap-2 rounded-full border-0 bg-card px-4 text-sm font-semibold text-ink ring-1 ring-line select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-paper active:scale-[0.98] disabled:opacity-50 data-disabled:opacity-50;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
   }
   .btn-danger {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-danger ring-1 ring-danger/25 select-none;
-    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-danger-soft active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex h-auto min-h-11 items-center justify-center gap-2 rounded-full border-0 bg-card px-4 text-sm font-semibold text-danger ring-1 ring-danger/25 select-none;
+    @apply transition-[background-color,transform] duration-150 ease-out hover:bg-danger-soft active:scale-[0.98] disabled:opacity-50 data-disabled:opacity-50;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger;
   }
   /* Round icon buttons, as in the header. */
@@ -90,14 +198,6 @@ body {
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink;
   }
 
-  .field {
-    /* 16px text, so iPhones don't zoom the page on focus. */
-    @apply min-h-14 w-full rounded-2xl bg-card px-4 text-base text-ink ring-1 ring-line placeholder:text-muted/70;
-    @apply focus:ring-2 focus:ring-leaf focus:outline-none;
-  }
-  .label {
-    @apply mb-2 block text-sm font-semibold text-ink;
-  }
   .eyebrow {
     @apply text-[13px] font-semibold text-ink/70;
   }

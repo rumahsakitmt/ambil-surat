@@ -1,23 +1,32 @@
 "use client";
 
+import { AlertDialog, AlertDialogBackdrop, AlertDialogClose, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@ui-sdk/react/alert-dialog";
+import { Button } from "@ui-sdk/react/button";
+import { Checkbox, CheckboxIndicator } from "@ui-sdk/react/checkbox";
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from "@ui-sdk/react/field";
+import { Input } from "@ui-sdk/react/input";
+import { PasswordInput, PasswordInputControl, PasswordInputToggle } from "@ui-sdk/react/password-input";
+import { Select, SelectContent, SelectItem, SelectItemIndicator, SelectTrigger, SelectValue } from "@ui-sdk/react/select";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { LETTER_TONES, type LetterType } from "@/lib/format";
-import { createRoom, openShare, setPassword, setupAdmin, shareLetters, signIn, type FormState } from "./actions";
+import { openShare, shareLetters, setupAdmin, signIn, type FormState } from "./actions";
 import { IconCheck } from "./icons";
 
+type SubmitProps = { children: React.ReactNode; busy?: string; className?: string; disabled?: boolean } & { [key: `data-${string}`]: string | undefined };
+
 /** A submit button that shows it is working, so nobody taps twice. */
-export function Submit({ children, busy, className = "btn w-full" }: { children: React.ReactNode; busy?: string; className?: string }) {
+export function Submit({ children, busy, className = "btn w-full", disabled, ...rest }: SubmitProps) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={className} disabled={pending} aria-busy={pending}>
+    <Button type="submit" className={className} disabled={pending || disabled} focusableWhenDisabled aria-busy={pending} {...rest}>
       {pending ? (busy ?? "Sebentar…") : children}
-    </button>
+    </Button>
   );
 }
 
-function Message({ state }: { state: FormState }) {
+export function Message({ state }: { state: FormState }) {
   if (state?.error)
     return (
       <p role="alert" className="note-danger">
@@ -47,36 +56,20 @@ export function LoginForm({ first }: { first: boolean }) {
   const [state, action] = useActionState(first ? setupAdmin : signIn, undefined);
   return (
     <form action={action} className="flex flex-col gap-4">
-      <div>
-        <label className="label" htmlFor="username">
-          Nama pengguna
-        </label>
-        <input
-          id="username"
-          name="username"
-          className="field"
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          required
-          placeholder={first ? "admin" : "mis. poli-anak"}
-        />
-      </div>
-      <div>
-        <label className="label" htmlFor="password">
-          Kata sandi
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          className="field"
-          autoComplete={first ? "new-password" : "current-password"}
-          required
-          minLength={first ? 8 : undefined}
-        />
-      </div>
+      <Field name="username">
+        <FieldLabel>Nama pengguna</FieldLabel>
+        <Input autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required placeholder={first ? "admin" : "mis. poli-anak"} />
+        <FieldError match="valueMissing">Isi nama pengguna.</FieldError>
+      </Field>
+      <Field>
+        <FieldLabel>Kata sandi</FieldLabel>
+        <PasswordInput name="password" autoComplete={first ? "new-password" : "current-password"} required>
+          <PasswordInputControl minLength={first ? 8 : undefined} />
+          <PasswordInputToggle aria-label="Tampilkan kata sandi" />
+        </PasswordInput>
+        <FieldError match="valueMissing">Isi kata sandi.</FieldError>
+        <FieldError match="tooShort">Kata sandi admin minimal 8 karakter.</FieldError>
+      </Field>
       <Message state={state} />
       <Submit busy="Memeriksa…">{first ? "Buat akun admin" : "Masuk"}</Submit>
     </form>
@@ -89,46 +82,48 @@ type LetterOption = { value: string; type: LetterType; title: string; noSurat: s
 export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOption[] }) {
   const [state, action] = useActionState(shareLetters, undefined);
   const [picked, setPicked] = useState(() => new Set(letters.filter((l) => l.today).map((l) => l.value)));
-  const toggle = (value: string) =>
+  const set = (value: string, on: boolean) =>
     setPicked((old) => {
       const next = new Set(old);
-      if (!next.delete(value)) next.add(value);
+      if (on) next.add(value);
+      else next.delete(value);
       return next;
     });
   return (
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="noRm" value={noRm} />
       <ul className="grid gap-3 sm:grid-cols-2">
-        {letters.map((letter, i) => {
-          const on = picked.has(letter.value);
-          return (
-            <li key={letter.value} className="rise" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
-              <label
-                className={`tile relative flex h-full min-h-36 cursor-pointer flex-col justify-between gap-4 transition-transform duration-150 select-none active:scale-[0.985] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink ${LETTER_TONES[letter.type].tile} ${on ? "outline-[2.5px] -outline-offset-[2.5px] outline-ink outline-solid" : ""}`}
+        {letters.map((letter, i) => (
+          <li key={letter.value} className="rise" style={{ "--i": Math.min(i, 8) } as React.CSSProperties}>
+            <label
+              className={`tile relative flex h-full min-h-36 cursor-pointer flex-col justify-between gap-4 text-base transition-transform duration-150 select-none active:scale-[0.985] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink has-data-checked:outline-[2.5px] has-data-checked:-outline-offset-[2.5px] has-data-checked:outline-ink has-data-checked:outline-solid ${LETTER_TONES[letter.type].tile}`}
+            >
+              <Checkbox
+                name="item"
+                value={letter.value}
+                checked={picked.has(letter.value)}
+                onCheckedChange={(checked) => set(letter.value, checked === true)}
+                className="absolute top-4 right-4 mt-0 size-8 rounded-full border-0 bg-white/80 ring-1 ring-ink/15 transition-colors duration-150 outline-none data-checked:bg-ink data-checked:text-white data-checked:ring-0"
               >
-                <input type="checkbox" name="item" value={letter.value} checked={on} onChange={() => toggle(letter.value)} className="peer sr-only" />
-                <span
-                  className={`absolute top-4 right-4 grid size-8 place-items-center rounded-full transition-colors duration-150 ${on ? "bg-ink text-white" : "bg-white/80 text-transparent ring-1 ring-ink/15"}`}
-                  aria-hidden="true"
-                >
+                <CheckboxIndicator>
                   <IconCheck className="size-4" />
+                </CheckboxIndicator>
+              </Checkbox>
+              <span className="pr-10">
+                <span className="block text-[13px] font-semibold text-ink/65">
+                  {letter.date}
+                  {letter.today && " · hari ini"}
                 </span>
-                <span className="pr-10">
-                  <span className="block text-[13px] font-semibold text-ink/65">
-                    {letter.date}
-                    {letter.today && " · hari ini"}
-                  </span>
-                  <span className="mt-0.5 block text-lg leading-snug font-extrabold tracking-tight">{letter.title}</span>
-                </span>
-                <span className="min-w-0">
-                  {letter.detail && <span className="block truncate text-sm text-ink/80">{letter.detail}</span>}
-                  {letter.noRawat && <span className="mt-0.5 block truncate text-[13px] font-semibold text-ink/70">No. rawat {letter.noRawat}</span>}
-                  <span className="mt-0.5 block truncate font-mono text-xs text-ink/60">{letter.noSurat}</span>
-                </span>
-              </label>
-            </li>
-          );
-        })}
+                <span className="mt-0.5 block text-lg leading-snug font-extrabold tracking-tight">{letter.title}</span>
+              </span>
+              <span className="min-w-0">
+                {letter.detail && <span className="block truncate text-sm text-ink/80">{letter.detail}</span>}
+                {letter.noRawat && <span className="mt-0.5 block truncate text-[13px] font-semibold text-ink/70">No. rawat {letter.noRawat}</span>}
+                <span className="mt-0.5 block truncate font-mono text-xs text-ink/60">{letter.noSurat}</span>
+              </span>
+            </label>
+          </li>
+        ))}
       </ul>
       <Message state={state} />
       {/* Floats above the bottom bar so it is always in reach of a thumb. */}
@@ -142,85 +137,52 @@ export function ShareForm({ noRm, letters }: { noRm: string; letters: LetterOpti
 function SubmitShare({ count }: { count: number }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn w-full justify-between pr-3 pl-6" disabled={pending || count === 0}>
+    <Button type="submit" className="btn w-full justify-between pr-3 pl-6" disabled={pending || count === 0} focusableWhenDisabled>
       <span>{pending ? "Menyiapkan QR…" : count === 0 ? "Pilih surat dulu" : `Buat QR · ${count} surat`}</span>
       <span className="grid size-10 place-items-center rounded-full bg-white/70 text-base leading-none" aria-hidden="true">
         ›››
       </span>
-    </button>
+    </Button>
   );
 }
 
-export function RoomForm({ poli, bangsal }: { poli: { code: string; name: string }[]; bangsal: { code: string; name: string }[] }) {
-  const [state, action] = useActionState(createRoom, undefined);
-  return (
-    <form action={action} className="flex flex-col gap-4">
-      <div>
-        <label className="label" htmlFor="room">
-          Ruangan
-        </label>
-        <select id="room" name="room" className="field" required defaultValue="">
-          <option value="" disabled>
-            Pilih poli atau bangsal…
-          </option>
-          <optgroup label="Poliklinik">
-            {poli.map((room) => (
-              <option key={room.code} value={`poli|${room.code}|${room.name}`}>
-                {room.name}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label="Bangsal (rawat inap)">
-            {bangsal.map((room) => (
-              <option key={room.code} value={`bangsal|${room.code}|${room.name}`}>
-                {room.name}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="new-username">
-            Nama pengguna
-          </label>
-          <input id="new-username" name="username" className="field" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" required placeholder="mis. poli-anak" />
-        </div>
-        <div>
-          <label className="label" htmlFor="new-password">
-            Kata sandi
-          </label>
-          <input id="new-password" name="password" className="field" autoComplete="off" required minLength={6} placeholder="Minimal 6 karakter" />
-        </div>
-      </div>
-      <Message state={state} />
-      <Submit busy="Membuat…">Buat akun ruangan</Submit>
-    </form>
-  );
-}
+type ConfirmProps = {
+  action: (form: FormData) => void | Promise<void>;
+  fields: Record<string, string>;
+  trigger: React.ReactNode;
+  triggerClassName?: string;
+  title: string;
+  description: string;
+  confirm: string;
+  busy?: string;
+  /** The admin dashboard's compact buttons instead of the phone's pills. */
+  compact?: boolean;
+};
 
-export function PasswordForm({ id, own }: { id: string; own: boolean }) {
-  const [state, action] = useActionState(setPassword, undefined);
+/** A button that asks first, then sends a small form: revoking a QR, deleting an account. */
+export function ConfirmForm({ action, fields, trigger, triggerClassName, title, description, confirm, busy, compact }: ConfirmProps) {
   return (
-    <form action={action} className="flex flex-col gap-2">
-      <input type="hidden" name="id" value={id} />
-      <div className="flex gap-2">
-        <input
-          name="password"
-          className="field min-h-11 rounded-full bg-paper ring-0"
-          type={own ? "password" : "text"}
-          autoComplete={own ? "new-password" : "off"}
-          required
-          minLength={own ? 8 : 6}
-          aria-label="Kata sandi baru"
-          placeholder="Kata sandi baru"
-        />
-        <Submit className="btn-quiet shrink-0" busy="…">
-          Ganti
-        </Submit>
-      </div>
-      <Message state={state} />
-    </form>
+    <AlertDialog>
+      <AlertDialogTrigger className={triggerClassName} data-variant={compact ? "destructive" : undefined}>
+        {trigger}
+      </AlertDialogTrigger>
+      <AlertDialogBackdrop />
+      <AlertDialogContent>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
+        <AlertDialogDescription>{description}</AlertDialogDescription>
+        <form action={action} className="flex flex-wrap justify-end gap-2">
+          {Object.entries(fields).map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
+          <AlertDialogClose type="button" className={compact ? undefined : "btn-quiet"}>
+            Batal
+          </AlertDialogClose>
+          <Submit className={compact ? "" : "btn-danger"} busy={busy} data-variant={compact ? "destructive" : undefined} data-agent-confirm={description}>
+            {confirm}
+          </Submit>
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -274,7 +236,7 @@ export function DownloadPdf({ href, filename, children }: { href: string; filena
   );
 }
 
-const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"].map((label, i) => ({ value: String(i + 1), label }));
 
 /** What the patient or their family fills in after scanning: the patient's date of birth. */
 export function DobForm({ token }: { token: string }) {
@@ -284,23 +246,26 @@ export function DobForm({ token }: { token: string }) {
     // The key re-creates the fields with what was typed after each answer, since React empties a submitted form.
     <form key={JSON.stringify(typed ?? {})} action={action} className="flex flex-col gap-4">
       <input type="hidden" name="token" value={token} />
-      <fieldset>
-        <legend className="label">Tanggal lahir pasien</legend>
+      <FieldSet>
+        <FieldLegend className="text-sm">Tanggal lahir pasien</FieldLegend>
         <div className="grid grid-cols-[4.5rem_1fr_6rem] gap-2">
-          <input name="day" defaultValue={typed?.day} className="field px-3 text-center" inputMode="numeric" pattern="[0-9]*" maxLength={2} required aria-label="Tanggal" placeholder="Tgl" autoComplete="off" />
-          <select name="month" className="field px-3" required aria-label="Bulan" defaultValue={typed?.month ?? ""}>
-            <option value="" disabled>
-              Bulan
-            </option>
-            {MONTHS.map((name, i) => (
-              <option key={name} value={i + 1}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <input name="year" defaultValue={typed?.year} className="field px-3 text-center" inputMode="numeric" pattern="[0-9]*" maxLength={4} required aria-label="Tahun" placeholder="Tahun" autoComplete="off" />
+          <Input name="day" defaultValue={typed?.day} className="px-3 text-center" inputMode="numeric" pattern="[0-9]*" maxLength={2} required aria-label="Tanggal" placeholder="Tgl" autoComplete="off" />
+          <Select name="month" required items={MONTHS} defaultValue={typed?.month || undefined} placeholder="Bulan" presentation="auto">
+            <SelectTrigger aria-label="Bulan" className="w-full min-w-0 px-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                  <SelectItemIndicator className="ms-auto" />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input name="year" defaultValue={typed?.year} className="px-3 text-center" inputMode="numeric" pattern="[0-9]*" maxLength={4} required aria-label="Tahun" placeholder="Tahun" autoComplete="off" />
         </div>
-      </fieldset>
+      </FieldSet>
       {state?.error && (
         <p role="alert" className="note-danger">
           {state.error}

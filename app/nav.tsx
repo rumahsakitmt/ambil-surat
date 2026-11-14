@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ui-sdk/react/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -52,9 +53,9 @@ function Bar({ items, label, current }: Props & { current: string | undefined })
           );
         })}
         <form action={signOut}>
-          <button type="submit" className="flex h-12 items-center gap-2 rounded-full px-4 text-sm font-semibold text-muted transition-colors duration-150 hover:text-danger" aria-label="Keluar">
+          <Button type="submit" className="flex h-12 w-auto items-center gap-2 rounded-full border-0 bg-transparent px-4 text-sm font-semibold text-muted transition-colors duration-150 hover:bg-transparent hover:text-danger" aria-label="Keluar">
             <IconLogout className="size-5" />
-          </button>
+          </Button>
         </form>
       </div>
     </nav>

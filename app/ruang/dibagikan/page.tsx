@@ -8,7 +8,7 @@ import { requireRoom } from "@/lib/session";
 import { revokeShare } from "../../actions";
 import { Avatar, LetterTag } from "../../brand";
 import { IconQr } from "../../icons";
-import { Submit } from "../../ui";
+import { ConfirmForm } from "../../ui";
 import { ListSkeleton } from "../parts";
 
 export const metadata: Metadata = { title: "Sudah dibagikan" };
@@ -53,12 +53,16 @@ async function Shares() {
                 <Link href={`/ruang/bagikan/${share.id}`} className="btn min-h-11 flex-1 text-sm">
                   <IconQr className="size-4" /> Tampilkan QR
                 </Link>
-                <form action={revokeShare}>
-                  <input type="hidden" name="id" value={share.id} />
-                  <Submit className="btn-danger" busy="…">
-                    Cabut
-                  </Submit>
-                </form>
+                <ConfirmForm
+                  action={revokeShare}
+                  fields={{ id: share.id }}
+                  trigger="Cabut"
+                  triggerClassName="btn-danger"
+                  title={`Cabut QR ${share.patientName}?`}
+                  description="QR ini langsung tidak bisa dibuka lagi dan suratnya dihapus dari sini. Surat di SIMRS tidak berubah."
+                  confirm="Cabut QR"
+                  busy="Mencabut…"
+                />
               </div>
             </li>
           ))}

@@ -1,3 +1,4 @@
+import { Avatar as Initials, AvatarFallback } from "@ui-sdk/react/avatar";
 import { LETTER_TONES, type LetterType } from "@/lib/format";
 
 /** The app's mark: a letter with a QR corner, on a leaf-green tile. */
@@ -38,9 +39,9 @@ export function toneOf(text: string) {
 
 export function Avatar({ name, className = "size-11 text-sm" }: { name: string; className?: string }) {
   return (
-    <span className={`inline-grid shrink-0 place-items-center rounded-full font-bold text-ink ${toneOf(name)} ${className}`} aria-hidden="true">
-      {initials(name)}
-    </span>
+    <Initials className={`rounded-full font-bold text-ink ${toneOf(name)} ${className}`} aria-hidden="true">
+      <AvatarFallback>{initials(name)}</AvatarFallback>
+    </Initials>
   );
 }
 
