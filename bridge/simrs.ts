@@ -45,12 +45,17 @@ export async function rooms(run: Run) {
 }
 
 const PATIENT = "pasien.no_rkm_medis as noRm, pasien.nm_pasien as name, date_format(pasien.tgl_lahir,'%Y-%m-%d') as dob, pasien.jk as sex";
-const patient = (r: Record<string, string | null>) => ({
+/**
+ * The line under a patient's name is joined here, not in SQL: Khanza's columns
+ * are latin1, and MySQL refuses to concat them with a non-ASCII literal like "·"
+ * sent over a utf8mb4 connection ("Illegal mix of collations").
+ */
+const patient = (r: Record<string, string | number | null>, info: unknown[] = [r.info]) => ({
   noRm: text(r.noRm),
   name: text(r.name),
   dob: text(r.dob),
   sex: text(r.sex),
-  info: text(r.info),
+  info: info.map(text).filter(Boolean).join(" · "),
 });
 
 /** A room's pick list: today's patients of a poli, or those in a ward now (and who left it since yesterday). */
@@ -60,25 +65,27 @@ export async function patients(run: Run, today: string, room: { kind: string; co
       ? await run(
           // One row per patient, under ONLY_FULL_GROUP_BY too (on by default since MySQL 5.7): every column
           // is grouped or aggregated. The room is the one they are in now, else the last one they were in.
-          `select ${PATIENT}, concat(coalesce(max(if(kamar_inap.stts_pulang='-', kamar.kd_kamar, null)), max(kamar.kd_kamar)), ` +
-            "if(max(kamar_inap.stts_pulang='-'), '', ' · sudah pulang')) as info " +
+          `select ${PATIENT}, coalesce(max(if(kamar_inap.stts_pulang='-', kamar.kd_kamar, null)), max(kamar.kd_kamar)) as room, ` +
+            "max(kamar_inap.stts_pulang='-') as here " +
             "from kamar_inap inner join kamar on kamar.kd_kamar=kamar_inap.kd_kamar " +
             "inner join reg_periksa on reg_periksa.no_rawat=kamar_inap.no_rawat " +
             "inner join pasien on pasien.no_rkm_medis=reg_periksa.no_rkm_medis " +
             "where kamar.kd_bangsal=? and (kamar_inap.stts_pulang='-' or kamar_inap.tgl_keluar>=date_sub(?, interval 1 day)) " +
             "group by pasien.no_rkm_medis, pasien.nm_pasien, pasien.tgl_lahir, pasien.jk " +
-            "order by max(kamar_inap.stts_pulang='-') desc, info limit 300",
+            "order by here desc, room limit 300",
           [room.code, today],
         )
       : await run(
-          `select ${PATIENT}, concat('No. ', reg_periksa.no_reg, ' · ', dokter.nm_dokter) as info ` +
+          `select ${PATIENT}, reg_periksa.no_reg as noReg, dokter.nm_dokter as doctor ` +
             "from reg_periksa inner join pasien on pasien.no_rkm_medis=reg_periksa.no_rkm_medis " +
             "inner join dokter on dokter.kd_dokter=reg_periksa.kd_dokter " +
             "where reg_periksa.tgl_registrasi=? and reg_periksa.kd_poli=? and reg_periksa.stts<>'Batal' " +
             "order by reg_periksa.no_reg limit 300",
           [today, room.code],
         );
-  return rows.map(patient);
+  return room.kind === "bangsal"
+    ? rows.map((r) => patient(r, [r.room, Number(r.here) === 1 ? "" : "sudah pulang"]))
+    : rows.map((r) => patient(r, [`No. ${text(r.noReg)}`, r.doctor]));
 }
 
 /** Any patient of the hospital, by part of the name or the whole record number. */
@@ -91,12 +98,12 @@ export async function search(run: Run, query: string) {
   if (NO_RAWAT.test(q)) {
     // A visit: its patient, with the poli and day so the nurse can tell it is the right one.
     const rows = await run(
-      `select ${PATIENT}, concat('No. rawat ', reg_periksa.no_rawat, ' · ', ifnull(poliklinik.nm_poli, reg_periksa.kd_poli), ' · ', date_format(reg_periksa.tgl_registrasi,'%d-%m-%Y')) as info ` +
+      `select ${PATIENT}, reg_periksa.no_rawat as noRawat, ifnull(poliklinik.nm_poli, reg_periksa.kd_poli) as poli, date_format(reg_periksa.tgl_registrasi,'%d-%m-%Y') as day ` +
         "from reg_periksa inner join pasien on pasien.no_rkm_medis=reg_periksa.no_rkm_medis " +
         "left join poliklinik on poliklinik.kd_poli=reg_periksa.kd_poli where reg_periksa.no_rawat=?",
       [q],
     );
-    return rows.map(patient);
+    return rows.map((r) => patient(r, [`No. rawat ${text(r.noRawat)}`, r.poli, r.day]));
   }
   const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
   const rows = await run(
