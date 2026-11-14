@@ -53,15 +53,25 @@ export async function ask<K extends keyof Answers>(kind: K, args: Record<string,
       watch.stop?.();
       resolve(value);
     };
-    const timer = setTimeout(() => done({ ok: false, offline: true }), 10_000);
+    const timer = setTimeout(() => {
+      console.error(`SIMRS: no answer to "${kind}" in 10 seconds.`);
+      done({ ok: false, offline: true });
+    }, 10_000);
     watch.stop = socket().onUpdate(
       api.jobs.status,
       { secret, id },
       (job) => {
         if (job.status === "done") done({ ok: true, data: job.result as Answers[K] });
-        else if (job.status === "error") done({ ok: false, offline: false });
+        else if (job.status === "error") {
+          console.error(`SIMRS: the bridge could not answer "${kind}".`);
+          done({ ok: false, offline: false });
+        }
       },
-      () => done({ ok: false, offline: false }),
+      (error) => {
+        // Usually Convex running older functions than this app: deploy both together.
+        console.error(`SIMRS: could not follow the answer to "${kind}":`, error.message);
+        done({ ok: false, offline: false });
+      },
     );
     // The answer may have arrived before onUpdate returned.
     if (settled) watch.stop();

@@ -58,12 +58,16 @@ export async function patients(run: Run, today: string, room: { kind: string; co
   const rows =
     room.kind === "bangsal"
       ? await run(
-          `select ${PATIENT}, concat(kamar.kd_kamar, if(kamar_inap.stts_pulang='-','',' · sudah pulang')) as info ` +
+          // One row per patient, under ONLY_FULL_GROUP_BY too (on by default since MySQL 5.7): every column
+          // is grouped or aggregated. The room is the one they are in now, else the last one they were in.
+          `select ${PATIENT}, concat(coalesce(max(if(kamar_inap.stts_pulang='-', kamar.kd_kamar, null)), max(kamar.kd_kamar)), ` +
+            "if(max(kamar_inap.stts_pulang='-'), '', ' · sudah pulang')) as info " +
             "from kamar_inap inner join kamar on kamar.kd_kamar=kamar_inap.kd_kamar " +
             "inner join reg_periksa on reg_periksa.no_rawat=kamar_inap.no_rawat " +
             "inner join pasien on pasien.no_rkm_medis=reg_periksa.no_rkm_medis " +
             "where kamar.kd_bangsal=? and (kamar_inap.stts_pulang='-' or kamar_inap.tgl_keluar>=date_sub(?, interval 1 day)) " +
-            "group by pasien.no_rkm_medis order by kamar_inap.stts_pulang='-' desc, kamar.kd_kamar limit 300",
+            "group by pasien.no_rkm_medis, pasien.nm_pasien, pasien.tgl_lahir, pasien.jk " +
+            "order by max(kamar_inap.stts_pulang='-') desc, info limit 300",
           [room.code, today],
         )
       : await run(
