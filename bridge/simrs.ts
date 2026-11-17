@@ -110,7 +110,7 @@ export async function search(run: Run, query: string) {
     `select ${PATIENT}, pasien.alamat as info from pasien where pasien.nm_pasien like ? or pasien.no_rkm_medis=? order by pasien.nm_pasien limit 30`,
     [like, q],
   );
-  return rows.map(patient);
+  return rows.map((r) => patient(r));
 }
 
 /** A patient's letters of the four kinds: the last 30 days (and control dates still ahead), or all of them. */
